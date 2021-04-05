@@ -1,0 +1,43 @@
+name: "Code Scanning"
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'include/**.hpp'
+      - 'test/**.cpp'
+      - '**.cmake'
+      - 'conanfile.py'
+      - 'CMakeLists.txt'
+      - 'test/CMakeLists.txt'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'include/**.hpp'
+      - 'test/**.cpp'
+      - '**.cmake'
+      - 'conanfile.py'
+      - 'CMakeLists.txt'
+      - 'test/CMakeLists.txt'
+
+jobs:
+  analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+
+    - name: Build Project
+      run: |
+        mkdir cmake-build-debug
+        cd cmake-build-debug
+        conan install ..
+        cmake .. -DCMAKE_BUILD_TYPE=Debug -DMSL_ENABLE_UNIT_TESTS=On
+        cmake --build .
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
