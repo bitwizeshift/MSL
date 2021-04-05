@@ -51,8 +51,6 @@ namespace msl::inline concepts {
   /// 3. `T` is assignable from a `nullptr` (`t = nullptr` is well-formed)
   /// 4. `T` is equality comparable with other `T` types
   /// 5. `T` is equality comparable with `nullptr`
-  ///
-  /// \tparam T the type to check
   ////////////////////////////////////////////////////////////////////////////
   template <typename T>
   concept nullable_pointer = (

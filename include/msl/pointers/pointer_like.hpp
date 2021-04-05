@@ -46,9 +46,6 @@ namespace msl::detail {
   /// requirement on copy-construction with the `convertible_to` clause of
   /// the concept -- so this defines a custom
   /// 'weakly_equality_comparable_with' that does the same thing
-  ///
-  /// \tparam T the left type
-  /// \tparam U the right type
   //////////////////////////////////////////////////////////////////////////////
   template <typename T, typename U>
   concept weakly_equality_comparable_with = requires(const T& t, const U& u) {
@@ -60,8 +57,6 @@ namespace msl::detail {
 
   //////////////////////////////////////////////////////////////////////////////
   /// \brief A simple trait to check that a given type `T` is dereferencable
-  ///
-  /// \tparam T the type to check
   //////////////////////////////////////////////////////////////////////////////
   template <typename T>
   concept dereferenceable = requires(T t) {
@@ -79,8 +74,6 @@ namespace msl::inline concepts {
   /// The primary requirement for things to be considered "pointer-like" is that
   /// they must be indirectly dereferencable with `operator->` and `operator*`,
   /// equality comparable with itself.
-  ///
-  /// \tparam T the type to check
   //////////////////////////////////////////////////////////////////////////////
   template <typename T>
   concept pointer_like = raw_pointer<T> || (
