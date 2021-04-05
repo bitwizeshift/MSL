@@ -6,6 +6,7 @@ set(source_files
   src/main.cpp
   src/pointers/raw_pointer.test.cpp
   src/pointers/pointer_like.test.cpp
+  src/pointers/traversable_pointer.test.cpp
 )
 
 add_executable(${PROJECT_NAME}.test
