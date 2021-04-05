@@ -8,6 +8,7 @@ set(source_files
   src/pointers/pointer_like.test.cpp
   src/pointers/traversable_pointer.test.cpp
   src/pointers/nullable_pointer.test.cpp
+  src/pointers/not_null.test.cpp
 )
 
 add_executable(${PROJECT_NAME}.test
