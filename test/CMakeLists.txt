@@ -20,3 +20,9 @@ target_link_libraries(${PROJECT_NAME}.test
   PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
   PRIVATE Catch2::Catch2
 )
+
+##############################################################################
+# CTest
+##############################################################################
+
+add_test(${PROJECT_NAME}.test ${PROJECT_NAME}.test)
