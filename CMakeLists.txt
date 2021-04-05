@@ -32,6 +32,9 @@ set(MSL_VERSION ${PROJECT_VERSION} CACHE INTERNAL "Version of MSL")
 ##############################################################################
 
 set(header_files
+  # Utilities
+  include/msl/utilities/intrinsics.hpp
+
   # Pointers
   include/msl/pointers/raw_pointer.hpp
   include/msl/pointers/pointer_like.hpp
@@ -40,6 +43,9 @@ set(header_files
 )
 
 set(source_files
+  # Utilities
+  src/msl/utilities/intrinsics.cpp
+
   # Pointers
   src/msl/pointers/raw_pointer.cpp
   src/msl/pointers/pointer_like.cpp
