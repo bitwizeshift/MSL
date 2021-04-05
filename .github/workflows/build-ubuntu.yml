@@ -67,40 +67,40 @@ jobs:
         working-directory: ${{env.build-directory}}
         run: ctest --output-on-failure
 
-  sanitize:
-    name: ${{matrix.compiler.cc}} '${{matrix.sanitizer}}' sanitizer
-    runs-on: ubuntu-20.04
-    needs: test
+  # sanitize:
+  #   name: ${{matrix.compiler.cc}} '${{matrix.sanitizer}}' sanitizer
+  #   runs-on: ubuntu-20.04
+  #   needs: test
 
-    env:
-      build-directory: build
+  #   env:
+  #     build-directory: build
 
-    strategy:
-      matrix:
-        compiler:
-          - { cc: gcc, cxx: g++ }
-          - { cc: clang, cxx: clang++ }
-        sanitizer: [address, undefined]
+  #   strategy:
+  #     matrix:
+  #       compiler:
+  #         - { cc: gcc, cxx: g++ }
+  #         - { cc: clang, cxx: clang++ }
+  #       sanitizer: [address, undefined]
 
-    steps:
-      - name: Clone
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Clone
+  #       uses: actions/checkout@v2
 
-      - name: Prepare Environment
-        run: |
-          cmake -E make_directory ${{env.build-directory}}
+  #     - name: Prepare Environment
+  #       run: |
+  #         cmake -E make_directory ${{env.build-directory}}
 
-      - name: Configure
-        working-directory: ${{env.build-directory}}
-        env:
-          CC: ${{matrix.compiler.cc}}
-          CXX: ${{matrix.compiler.cxx}}
-        run: cmake .. -DCMAKE_BUILD_TYPE=Debug -DMSL_ENABLE_UNIT_TESTS=On -DCMAKE_CXX_FLAGS="-fsanitize=${{matrix.sanitizer}}"
+  #     - name: Configure
+  #       working-directory: ${{env.build-directory}}
+  #       env:
+  #         CC: ${{matrix.compiler.cc}}
+  #         CXX: ${{matrix.compiler.cxx}}
+  #       run: cmake .. -DCMAKE_BUILD_TYPE=Debug -DMSL_ENABLE_UNIT_TESTS=On -DCMAKE_CXX_FLAGS="-fsanitize=${{matrix.sanitizer}} -fconcepts"
 
-      - name: Build
-        working-directory: ${{env.build-directory}}
-        run: cmake --build .
+  #     - name: Build
+  #       working-directory: ${{env.build-directory}}
+  #       run: cmake --build .
 
-      - name: Test (Sanitize)
-        working-directory: ${{env.build-directory}}
-        run: ctest --output-on-failure
+  #     - name: Test (Sanitize)
+  #       working-directory: ${{env.build-directory}}
+  #       run: ctest --output-on-failure
