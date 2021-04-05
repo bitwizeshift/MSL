@@ -6,7 +6,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
   pull_request:
@@ -14,7 +13,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
 
@@ -30,7 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         compiler:
-          - { name: "xcode", version: "12.3" }
+          - { name: "xcode", version: "12.4" }
 
     steps:
       - name: Clone
@@ -93,7 +91,6 @@ jobs:
       - name: Prepare Environment
         run: |
           cmake -E make_directory ${{env.build-directory}}
-          cmake -E chdir ${{env.build-directory}} conan install ..
 
       - name: Configure
         working-directory: ${{env.build-directory}}

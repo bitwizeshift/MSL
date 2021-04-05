@@ -7,7 +7,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
   pull_request:
@@ -16,7 +15,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
 
@@ -32,16 +30,10 @@ jobs:
       - name: Clone
         uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.7
-
       - name: Prepare Environment
         run: |
           sudo apt-get install -y clang clang-tools g++-multilib
-          python -m pip install --upgrade pip
-          pip install conan cpp-coveralls
+          pip install cpp-coveralls
           cmake -E make_directory ${{env.build-directory}}
 
       - name: Configure
@@ -50,7 +42,6 @@ jobs:
           CC: ${{matrix.compiler.cc}}
           CXX: ${{matrix.compiler.cxx}}
         run: |
-          conan install ..
           scan-build -o ../${{env.artifact-directory}} cmake .. -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DMSL_ENABLE_UNIT_TESTS=On
 
       - name: Scan

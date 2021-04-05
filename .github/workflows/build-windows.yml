@@ -6,7 +6,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
       - '.github/workflows/build-windows.yml'
@@ -15,7 +14,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
       - '.github/workflows/build-windows.yml'
@@ -33,8 +31,7 @@ jobs:
       matrix:
         compiler:
           # Xcode Versions
-          - { name: "gcc", version: "latest", cc: gcc, cxx: g++ }
-          - { name: "clang", version: "10", cc: clang, cxx: clang++ }
+          - { name: "clang", version: "11", cc: clang, cxx: clang++ }
           - { name: "clang-cl", version: "latest", cc: clang-cl, cxx: clang-cl }
           - { name: "cl", version: "14.28", toolset_version: "142", cc: cl, cxx: cl }
 

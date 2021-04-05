@@ -7,7 +7,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
   pull_request:
@@ -16,7 +15,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
 
@@ -35,7 +33,6 @@ jobs:
       run: |
         mkdir cmake-build-debug
         cd cmake-build-debug
-        conan install ..
         cmake .. -DCMAKE_BUILD_TYPE=Debug -DMSL_ENABLE_UNIT_TESTS=On
         cmake --build .
 

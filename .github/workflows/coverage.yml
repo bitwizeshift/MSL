@@ -29,26 +29,18 @@ jobs:
     strategy:
       matrix:
         compiler:
-          - { cc: gcc-10, cxx: g++-10 }
+          - { cc: gcc-10, cxx: g++-10, cov: gcov-10 }
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.7
 
       - name: Prepare Environment
         run: |
           sudo apt-get install -y ninja-build ${{matrix.compiler.cxx}} g++-multilib
           sudo apt-get install lcov
 
-          python -m pip install --upgrade pip
-          pip install conan
           cmake -E make_directory ${{env.build-directory}}
-          cmake -E chdir ${{env.build-directory}} conan install ..
 
       - name: Configure
         working-directory: ${{env.build-directory}}
@@ -59,7 +51,7 @@ jobs:
           cmake ..                                                            \
             -GNinja                                                           \
             -DCMAKE_BUILD_TYPE=Debug                                          \
-            -DMSL_ENABLE_UNIT_TESTS=On                                    \
+            -DMSL_ENABLE_UNIT_TESTS=On                                        \
             -DCMAKE_CXX_FLAGS="--coverage"                                    \
 
       - name: Build
@@ -73,15 +65,17 @@ jobs:
       - name: Process Coverage Data
         working-directory: ${{env.build-directory}}
         run: |
+          ${{matrix.compiler.cov}} $(find $(pwd) -name '*.o' -type f)
+
           # Generate coverage information
           lcov --capture                                                      \
-            --gcov-tool gcov                                                  \
+            --gcov-tool ${{matrix.compiler.cov}}                              \
             --directory .                                                     \
             --output-file coverage_unfiltered.info
 
           # Strip symbols from 'test' directory
           lcov --remove coverage_unfiltered.info -o coverage.info             \
-            --gcov-tool $(pwd)/gcov-executable.sh                             \
+            --gcov-tool ${{matrix.compiler.cov}}                              \
             "/usr/*"                                                          \
             "$(pwd)/*"                                                        \
             "*/test/*"                                                        \

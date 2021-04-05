@@ -1,8 +1,8 @@
 [![Ubuntu Build Status](https://github.com/bitwizeshift/msl/workflows/Ubuntu/badge.svg?branch=master)](https://github.com/bitwizeshift/msl/actions?query=workflow%3AUbuntu)
 [![macOS Build Status](https://github.com/bitwizeshift/msl/workflows/macOS/badge.svg?branch=master)](https://github.com/bitwizeshift/msl/actions?query=workflow%3AmacOS)
 [![Windows Build Status](https://github.com/bitwizeshift/msl/workflows/Windows/badge.svg?branch=master)](https://github.com/bitwizeshift/msl/actions?query=workflow%3AWindows)
-[![Coverage Status](https://coveralls.io/repos/github/bitwizeshift/msl/badge.svg?branch=master)](https://coveralls.io/github/bitwizeshift/result?branch=master)
-[![Github Issues](https://img.shields.io/github/issues/bitwizeshift/result.svg)](http://github.com/bitwizeshift/msl/issues)
+[![Coverage Status](https://coveralls.io/repos/github/bitwizeshift/msl/badge.svg?branch=master)](https://coveralls.io/github/bitwizeshift/MSL?branch=master)
+[![Github Issues](https://img.shields.io/github/issues/bitwizeshift/MSL.svg)](http://github.com/bitwizeshift/msl/issues)
 <br>
 [![Github Releases](https://img.shields.io/github/v/release/bitwizeshift/msl.svg?include_prereleases)](https://github.com/bitwizeshift/msl/releases)
 [![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/bitwizeshift)

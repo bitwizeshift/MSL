@@ -6,7 +6,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
   pull_request:
@@ -14,7 +13,6 @@ on:
       - 'include/**.hpp'
       - 'test/**.cpp'
       - '**.cmake'
-      - 'conanfile.py'
       - 'CMakeLists.txt'
       - 'test/CMakeLists.txt'
 
