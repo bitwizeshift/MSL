@@ -5,6 +5,7 @@ CPMAddPackage("gh:catchorg/Catch2@2.13.4")
 set(source_files
   src/main.cpp
   src/pointers/raw_pointer.test.cpp
+  src/pointers/pointer_like.test.cpp
 )
 
 add_executable(${PROJECT_NAME}.test
