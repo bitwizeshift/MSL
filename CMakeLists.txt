@@ -34,10 +34,13 @@ set(MSL_VERSION ${PROJECT_VERSION} CACHE INTERNAL "Version of MSL")
 set(header_files
   # Pointers
   include/msl/pointers/raw_pointer.hpp
+  include/msl/pointers/pointer_like.hpp
 )
 
 set(source_files
+  # Pointers
   src/msl/pointers/raw_pointer.cpp
+  src/msl/pointers/pointer_like.cpp
 )
 
 add_library(${PROJECT_NAME} ${source_files} ${header_files})
