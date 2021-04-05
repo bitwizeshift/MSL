@@ -826,10 +826,10 @@ MSL_FORCE_INLINE constexpr
 auto msl::check_not_null(T&& ptr)
   -> not_null<std::decay_t<T>>
 {
-  if (ptr == nullptr) [[unlikely]] {
+  if (ptr == nullptr) MSL_UNLIKELY {
     detail::throw_null_pointer_error();
   }
-  [[likely]] return assume_not_null(std::forward<T>(ptr));
+  MSL_LIKELY return assume_not_null(std::forward<T>(ptr));
 }
 
 template <typename T>

@@ -55,6 +55,18 @@
 # define MSL_HOT
 #endif
 
+#if __has_cpp_attribute(likely) >= 201803L
+# define MSL_LIKELY [[likely]]
+#else
+# define MSL_LIKELY
+#endif
+
+#if __has_cpp_attribute(unlikely) >= 201803L
+# define MSL_UNLIKELY [[unlikely]]
+#else
+# define MSL_UNLIKELY
+#endif
+
 namespace msl {
 
   struct intrinsics
