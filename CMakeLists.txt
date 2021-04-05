@@ -35,12 +35,14 @@ set(header_files
   # Pointers
   include/msl/pointers/raw_pointer.hpp
   include/msl/pointers/pointer_like.hpp
+  include/msl/pointers/traversable_pointer.hpp
 )
 
 set(source_files
   # Pointers
   src/msl/pointers/raw_pointer.cpp
   src/msl/pointers/pointer_like.cpp
+  src/msl/pointers/traversable_pointer.cpp
 )
 
 add_library(${PROJECT_NAME} ${source_files} ${header_files})
