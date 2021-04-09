@@ -1,22 +1,6 @@
 name: "Code Coverage"
 
-on:
-  push:
-    paths:
-      - 'include/**.hpp'
-      - 'test/**.cpp'
-      - '**.cmake'
-      - 'CMakeLists.txt'
-      - 'test/CMakeLists.txt'
-      - '.github/workflows/coverage.yml'
-  pull_request:
-    paths:
-      - 'include/**.hpp'
-      - 'test/**.cpp'
-      - '**.cmake'
-      - 'CMakeLists.txt'
-      - 'test/CMakeLists.txt'
-      - '.github/workflows/coverage.yml'
+on: [push, pull_request]
 
 jobs:
   coverage:

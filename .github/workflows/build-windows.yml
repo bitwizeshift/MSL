@@ -1,22 +1,6 @@
 name: Windows
 
-on:
-  push:
-    paths:
-      - 'include/**.hpp'
-      - 'test/**.cpp'
-      - '**.cmake'
-      - 'CMakeLists.txt'
-      - 'test/CMakeLists.txt'
-      - '.github/workflows/build-windows.yml'
-  pull_request:
-    paths:
-      - 'include/**.hpp'
-      - 'test/**.cpp'
-      - '**.cmake'
-      - 'CMakeLists.txt'
-      - 'test/CMakeLists.txt'
-      - '.github/workflows/build-windows.yml'
+on: [push, pull_request]
 
 jobs:
   test:

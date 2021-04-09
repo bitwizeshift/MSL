@@ -1,20 +1,6 @@
 name: Ubuntu
 
-on:
-  push:
-    paths:
-      - 'include/**.hpp'
-      - 'test/**.cpp'
-      - '**.cmake'
-      - 'CMakeLists.txt'
-      - 'test/CMakeLists.txt'
-  pull_request:
-    paths:
-      - 'include/**.hpp'
-      - 'test/**.cpp'
-      - '**.cmake'
-      - 'CMakeLists.txt'
-      - 'test/CMakeLists.txt'
+on: [push, pull_request]
 
 jobs:
   test:

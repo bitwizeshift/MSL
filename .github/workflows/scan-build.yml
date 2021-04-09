@@ -3,20 +3,8 @@ name: "Scan Build"
 on:
   push:
     branches: [master]
-    paths:
-      - 'include/**.hpp'
-      - 'test/**.cpp'
-      - '**.cmake'
-      - 'CMakeLists.txt'
-      - 'test/CMakeLists.txt'
   pull_request:
     branches: [master]
-    paths:
-      - 'include/**.hpp'
-      - 'test/**.cpp'
-      - '**.cmake'
-      - 'CMakeLists.txt'
-      - 'test/CMakeLists.txt'
 
 jobs:
   scan:
