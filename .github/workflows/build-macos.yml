@@ -4,7 +4,7 @@ on: [push, pull_request]
 
 jobs:
   test:
-    name: Xcode ${{matrix.compiler.version}}
+    name: ${{matrix.compiler.cc}}
     runs-on: macos-latest
 
     env:
@@ -14,7 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         compiler:
-          - { name: "xcode", version: "12.4" }
+          # - { name: "xcode", version: "12.4" }
+
+          # Clang Versions
+          - { cc: clang-11, cxx: clang++-11, lib: llvm@11 }
 
     steps:
       - name: Clone
@@ -22,8 +25,12 @@ jobs:
 
       - name: Prepare Environment
         run: |
-          ls -ls /Applications/
-          sudo xcode-select -switch /Applications/Xcode_${{ matrix.compiler.version }}.app
+          brew install ${{matrix.compiler.lib}}
+
+          echo "$(brew --prefix llvm)/bin" >> ${GITHUB_PATH}
+
+          # ls -ls /Applications/
+          # sudo xcode-select -switch /Applications/Xcode_${{ matrix.compiler.version }}.app
 
           cmake -E make_directory ${{env.build-directory}}
 
@@ -34,7 +41,7 @@ jobs:
         env:
           CC: clang
           CXX: clang++
-        run: cmake .. -DCMAKE_BUILD_TYPE=Debug -DMSL_ENABLE_UNIT_TESTS=On -DCMAKE_CXX_FLAGS="-std=c++2a -fconcepts"
+        run: cmake .. -DCMAKE_BUILD_TYPE=Debug -DMSL_ENABLE_UNIT_TESTS=On
 
       - name: Build (Debug)
         working-directory: ${{env.build-directory}}
@@ -58,37 +65,37 @@ jobs:
         working-directory: ${{env.build-directory}}
         run: ctest --output-on-failure
 
-  sanitize:
-    name: Xcode ${{matrix.compiler.version}} '${{matrix.sanitizer}}' sanitizer
-    runs-on: macos-latest
-    needs: test
+  # sanitize:
+  #   name: Xcode ${{matrix.compiler.version}} '${{matrix.sanitizer}}' sanitizer
+  #   runs-on: macos-latest
+  #   needs: test
 
-    env:
-      build-directory: build
+  #   env:
+  #     build-directory: build
 
-    strategy:
-      matrix:
-        sanitizer: [address, undefined]
+  #   strategy:
+  #     matrix:
+  #       sanitizer: [address, undefined]
 
-    steps:
-      - name: Clone
-        uses: actions/checkout@v2
+  #   steps:
+  #     - name: Clone
+  #       uses: actions/checkout@v2
 
-      - name: Prepare Environment
-        run: |
-          cmake -E make_directory ${{env.build-directory}}
+  #     - name: Prepare Environment
+  #       run: |
+  #         cmake -E make_directory ${{env.build-directory}}
 
-      - name: Configure
-        working-directory: ${{env.build-directory}}
-        env:
-          CC: clang
-          CXX: clang++
-        run: cmake .. -DCMAKE_BUILD_TYPE=Debug -DMSL_ENABLE_UNIT_TESTS=On -DCMAKE_CXX_FLAGS="-fsanitize=${{matrix.sanitizer}}"
+  #     - name: Configure
+  #       working-directory: ${{env.build-directory}}
+  #       env:
+  #         CC: clang
+  #         CXX: clang++
+  #       run: cmake .. -DCMAKE_BUILD_TYPE=Debug -DMSL_ENABLE_UNIT_TESTS=On -DCMAKE_CXX_FLAGS="-fsanitize=${{matrix.sanitizer}}"
 
-      - name: Build
-        working-directory: ${{env.build-directory}}
-        run: cmake --build .
+  #     - name: Build
+  #       working-directory: ${{env.build-directory}}
+  #       run: cmake --build .
 
-      - name: Test (Sanitize)
-        working-directory: ${{env.build-directory}}
-        run: ctest --output-on-failure
+  #     - name: Test (Sanitize)
+  #       working-directory: ${{env.build-directory}}
+  #       run: ctest --output-on-failure
