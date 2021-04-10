@@ -14,14 +14,18 @@ jobs:
       build-directory: build
       artifact-directory: scan-result
 
+    strategy:
+      matrix:
+        compiler:
+          - { cc: clang-11,  cxx: clang++-11, tools: clang-tools-11, scan: scan-build-11 }
+
     steps:
       - name: Clone
         uses: actions/checkout@v2
 
       - name: Prepare Environment
         run: |
-          sudo apt-get install -y clang clang-tools g++-multilib
-          pip install cpp-coveralls
+          sudo apt-get install -y ${{matrix.compiler.cc}} ${{matrix.compiler.tools}} g++-multilib
           cmake -E make_directory ${{env.build-directory}}
 
       - name: Configure
@@ -30,12 +34,12 @@ jobs:
           CC: ${{matrix.compiler.cc}}
           CXX: ${{matrix.compiler.cxx}}
         run: |
-          scan-build -o ../${{env.artifact-directory}} cmake .. -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DMSL_ENABLE_UNIT_TESTS=On
+          ${{matrix.compiler.scan}} -o ../${{env.artifact-directory}} cmake .. -DCMAKE_BUILD_TYPE=${{matrix.build_type}} -DMSL_ENABLE_UNIT_TESTS=On
 
       - name: Scan
         working-directory: ${{env.build-directory}}
         run: |
-          scan-build -o ../${{env.artifact-directory}} cmake --build .
+          ${{matrix.compiler.scan}} -o ../${{env.artifact-directory}} cmake --build .
 
       - uses: actions/upload-artifact@v2
         with:
