@@ -39,6 +39,10 @@
 #include <cstddef> // std::size_t
 #include <cstdint> // std::uintptr_t
 
+#if !defined(__clang__) || defined(__GNUC__) || defined(_MSC_VER)
+# include <cstdlib> // std::abort
+#endif
+
 #if defined(__clang__) || defined(__GNUC__)
 # define MSL_FORCE_INLINE [[gnu::always_inline]] inline
 #elif defined(_MSC_VER)
@@ -133,6 +137,14 @@ namespace msl {
     [[nodiscard]]
     static constexpr auto assume_not_null(T* p) noexcept -> T*;
 
+    /// \brief Provides a hint to the compiler that the current path leading to
+    ///        this call is not reachable
+    ///
+    /// In the event that an unknown compiler is used, this will simply call
+    /// std::abort if executed.
+    [[noreturn]]
+    static auto unreachable() noexcept -> void;
+
   };
 
 } // namespace msl
@@ -198,4 +210,19 @@ auto msl::intrinsics::assume_not_null(T* p)
 #endif
 }
 
+MSL_FORCE_INLINE
+auto msl::intrinsics::unreachable() noexcept -> void
+{
+#if defined(_MSC_VER)
+  __assume(0);
+#elif defined(__GNUC__) || defined(__clang__)
+  __builtin_unreachable();
+#else
+  // We have no other way to convey that this function will not return to help
+  // the optimizer. The best we really can do is to just call std::abort, which
+  // should only result in a single `call` instruction *at worst* if the compiler
+  // can't see that a branch isn't taken.
+  std::abort();
+#endif
+}
 #endif /* MSL_UTILITIES_INTRINSICS_HPP */
