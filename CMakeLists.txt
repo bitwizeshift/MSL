@@ -42,6 +42,7 @@ set(header_files
   include/msl/pointers/traversable_pointer.hpp
   include/msl/pointers/nullable_pointer.hpp
   include/msl/pointers/not_null.hpp
+  include/msl/pointers/tagged_ptr.hpp
 )
 
 set(source_files
@@ -55,6 +56,7 @@ set(source_files
   src/msl/pointers/traversable_pointer.cpp
   src/msl/pointers/nullable_pointer.cpp
   src/msl/pointers/not_null.cpp
+  src/msl/pointers/tagged_ptr.cpp
 )
 
 add_library(${PROJECT_NAME} ${source_files} ${header_files})
