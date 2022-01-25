@@ -31,11 +31,12 @@
 #ifndef MSL_POINTERS_NOT_NULL_HPP
 #define MSL_POINTERS_NOT_NULL_HPP
 
-#if defined(_MSC_VER) && (_MSC_VER >= 1200)
+#if defined(_MSC_VER)
 # pragma once
-#endif // defined(_MSC_VER) && (_MSC_VER >= 1200)
+#endif // defined(_MSC_VER)
 
 #include "msl/utilities/intrinsics.hpp" // MSL_FORCE_INLINE
+#include "msl/utilities/source_location.hpp"
 #include "msl/pointers/nullable_pointer.hpp"
 #include "msl/pointers/traversable_pointer.hpp"
 
@@ -63,21 +64,92 @@ namespace msl {
   // class : null_pointer_error
   //===========================================================================
 
+  //////////////////////////////////////////////////////////////////////////////
+  /// \brief A static class for managing the contract violation logic
+  //////////////////////////////////////////////////////////////////////////////
+  struct not_null_contract final
+  {
+    not_null_contract() = delete;
+    ~not_null_contract() = delete;
+
+    //--------------------------------------------------------------------------
+    // Public Member Types
+    //--------------------------------------------------------------------------
+
+    class violation;
+
+    /// \brief The handler function that will be executed on a contract
+    ///        violation.
+    ///
+    /// \note Contract violation handlers must be non-returning. They must
+    ///       either throw an exception or terminate the program.
+    using violation_handler = auto(*)(source_location) -> void;
+
+    //--------------------------------------------------------------------------
+    // Contract
+    //--------------------------------------------------------------------------
+
+    /// \brief Invokes the underlying violation handler assigned to this
+    ///        contract
+    ///
+    /// This function will not return
+    ///
+    /// \param where the location the violation is taking place
+    [[noreturn]]
+    static auto violate(source_location where = source_location::current()) -> void;
+
+    /// \brief Gets the currently assigned violation handler
+    ///
+    /// \return the currently assigned violation handler
+    static auto get_violation_handler() noexcept -> violation_handler;
+
+    /// \brief Sets the currently assigned violation handler
+    ///
+    /// \note If \p handler is `nullptr`, the currently assigned handler is
+    ///       returned instead
+    ///
+    /// \param handler the handler to set
+    /// \return the currently assigned violation handler
+    static auto set_violation_handler(violation_handler handler) noexcept -> violation_handler;
+  };
+
+
   /////////////////////////////////////////////////////////////////////////////
   /// \brief An exception thrown on null contract violations as part of
   ///        check_not_null
   /////////////////////////////////////////////////////////////////////////////
-  class not_null_contract_violation : public std::logic_error
+  class not_null_contract::violation : public std::logic_error
   {
-    using this_type = not_null_contract_violation;
+    //-------------------------------------------------------------------------
+    // Constructors / Assignment
+    //-------------------------------------------------------------------------
   public:
 
-    not_null_contract_violation();
-    not_null_contract_violation(const this_type& other) = default;
-    not_null_contract_violation(this_type&& other) = default;
+    explicit violation(source_location where);
+    violation(const violation& other) = default;
+    violation(violation&& other) = default;
 
-    auto operator=(const this_type& other) -> this_type& = default;
-    auto operator=(this_type&& other) -> this_type& = default;
+    //-------------------------------------------------------------------------
+
+    auto operator=(const violation& other) -> violation& = default;
+    auto operator=(violation&& other) -> violation& = default;
+
+    //-------------------------------------------------------------------------
+    // Accessors
+    //-------------------------------------------------------------------------
+  public:
+
+    /// \brief Queries where the failure occurred
+    ///
+    /// \return the source_location object indicating where the failure occurred
+    auto where() const noexcept -> const source_location&;
+
+    //-------------------------------------------------------------------------
+    // Private Members
+    //-------------------------------------------------------------------------
+  private:
+
+    source_location m_where;
   };
 
   //===========================================================================
@@ -86,11 +158,8 @@ namespace msl {
 
   namespace detail {
 
-    /// \brief Throws a not_null_contract_violation in exception mode
-    [[noreturn]] auto throw_null_pointer_error() -> void;
-
     ///////////////////////////////////////////////////////////////////////////
-    /// \brief A private type that exists to construct no_null's using the
+    /// \brief A private type that exists to construct not_null's using the
     ///        private constructor (through friendship)
     ///////////////////////////////////////////////////////////////////////////
     struct not_null_factory
@@ -449,10 +518,12 @@ namespace msl {
   ///
   /// \throw not_null_contract_violation if `ptr == nullptr`
   /// \param ptr the pointer to check for nullability first
+  /// \param where [optional] the location where the check is occurring
+  ///        (defaults to the call-site)
   /// \return a `not_null` object containing `ptr`
   template <typename T>
   [[nodiscard]]
-  constexpr auto check_not_null(T&& ptr)
+  constexpr auto check_not_null(T&& ptr, source_location where = source_location::current())
     -> not_null<std::decay_t<T>>;
 
   /// \brief Creates a `not_null` object by *assuming* that `ptr` is not null
@@ -596,16 +667,6 @@ namespace msl {
 
 } // namespace msl
 
-inline
-msl::not_null_contract_violation::not_null_contract_violation()
-  : logic_error{
-      "check_not_null invoked with null pointer; "
-      "not_null's contruct has been violated"
-    }
-{
-
-}
-
 //=============================================================================
 // detail utilities : not_null
 //=============================================================================
@@ -621,6 +682,17 @@ auto msl::detail::not_null_factory::make(T&& p)
     typename not_null<value_type>::ctor_tag{},
     std::forward<T>(p)
   };
+}
+
+//=============================================================================
+// class : not_null_contract::violation
+//=============================================================================
+
+MSL_FORCE_INLINE
+auto msl::not_null_contract::violation::where()
+  const noexcept -> const source_location&
+{
+  return m_where;
 }
 
 //=============================================================================
@@ -823,11 +895,11 @@ msl::not_null<T>::not_null(ctor_tag, P&& ptr)
 
 template <typename T>
 MSL_FORCE_INLINE constexpr
-auto msl::check_not_null(T&& ptr)
+auto msl::check_not_null(T&& ptr, source_location where)
   -> not_null<std::decay_t<T>>
 {
   if (ptr == nullptr) MSL_UNLIKELY {
-    detail::throw_null_pointer_error();
+    not_null_contract::violate(where);
   }
   MSL_LIKELY return assume_not_null(std::forward<T>(ptr));
 }
@@ -849,7 +921,7 @@ template <typename T>
 MSL_FORCE_INLINE constexpr
 auto msl::operator+(const not_null<T>& p, std::ptrdiff_t n)
   noexcept(noexcept(std::declval<const T&>() + std::ptrdiff_t{})) -> not_null<T>
-  requires(traversable_pointer<T>)
+  requires(msl::traversable_pointer<T>)
 {
   return assume_not_null(p.get() + n);
 }
@@ -858,7 +930,7 @@ template <typename T>
 MSL_FORCE_INLINE constexpr
 auto msl::operator+(std::ptrdiff_t n, const not_null<T>& p)
   noexcept(noexcept(std::ptrdiff_t{} + std::declval<const T&>())) -> not_null<T>
-  requires(traversable_pointer<T>)
+  requires(msl::traversable_pointer<T>)
 {
   return assume_not_null(n + p.get());
 }
@@ -867,7 +939,7 @@ template <typename T>
 MSL_FORCE_INLINE constexpr
 auto msl::operator-(const not_null<T>& p, std::ptrdiff_t n)
   noexcept(noexcept(std::declval<const T&>() - std::ptrdiff_t{})) -> not_null<T>
-  requires(traversable_pointer<T>)
+  requires(msl::traversable_pointer<T>)
 {
   return assume_not_null(p.get() - n);
 }
@@ -876,7 +948,7 @@ template <typename T>
 MSL_FORCE_INLINE constexpr
 auto msl::operator-(const not_null<T>& lhs, const not_null<T>& rhs)
   noexcept(noexcept(std::declval<const T&>() - std::declval<const T&>())) -> decltype(lhs.get() - rhs.get())
-  requires(traversable_pointer<T>)
+  requires(msl::traversable_pointer<T>)
 {
   return lhs.get() - rhs.get();
 }

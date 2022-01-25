@@ -412,7 +412,7 @@ TEST_CASE("check_not_null(U&&)", "[utilities]") {
     SECTION("Throws null contract violation") {
       const auto* input = static_cast<int*>(nullptr);
 
-      REQUIRE_THROWS_AS(check_not_null(input), not_null_contract_violation);
+      REQUIRE_THROWS_AS(check_not_null(input), not_null_contract::violation);
     }
   }
   SECTION("Input is not null") {
