@@ -44,6 +44,7 @@ set(generated_header_files
 
 set(header_files
   # Utilities
+  include/msl/utilities/assert.hpp
   include/msl/utilities/intrinsics.hpp
   include/msl/utilities/source_location.hpp
 
@@ -58,6 +59,7 @@ set(header_files
 
 set(source_files
   # Utilities
+  src/msl/utilities/assert.cpp
   src/msl/utilities/intrinsics.cpp
   src/msl/utilities/source_location.cpp
 
