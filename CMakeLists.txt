@@ -47,6 +47,7 @@ set(header_files
   include/msl/utilities/assert.hpp
   include/msl/utilities/intrinsics.hpp
   include/msl/utilities/source_location.hpp
+  include/msl/utilities/uninitialized_storage.hpp
 
   # Quantities
   include/msl/quantities/address.hpp
@@ -68,6 +69,7 @@ set(source_files
   src/msl/utilities/assert.cpp
   src/msl/utilities/intrinsics.cpp
   src/msl/utilities/source_location.cpp
+  src/msl/utilities/uninitialized_storage.cpp
 
   # Quantities
   src/msl/quantities/address.cpp
