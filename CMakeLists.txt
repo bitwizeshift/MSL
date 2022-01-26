@@ -51,6 +51,7 @@ set(header_files
   # Quantities
   include/msl/quantities/address.hpp
   include/msl/quantities/address_io.hpp
+  include/msl/quantities/digital_quantity.hpp
 
   # Pointers
   include/msl/pointers/raw_pointer.hpp
@@ -70,6 +71,7 @@ set(source_files
   # Quantities
   src/msl/quantities/address.cpp
   src/msl/quantities/address_io.cpp
+  src/msl/quantities/digital_quantity.cpp
 
   # Pointers
   src/msl/pointers/raw_pointer.cpp
