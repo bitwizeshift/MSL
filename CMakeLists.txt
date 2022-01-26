@@ -52,6 +52,7 @@ set(header_files
   # Quantities
   include/msl/quantities/address.hpp
   include/msl/quantities/address_io.hpp
+  include/msl/quantities/alignment.hpp
   include/msl/quantities/digital_quantity.hpp
   include/msl/quantities/quantity.hpp
 
@@ -74,6 +75,7 @@ set(source_files
   # Quantities
   src/msl/quantities/address.cpp
   src/msl/quantities/address_io.cpp
+  src/msl/quantities/alignment.cpp
   src/msl/quantities/digital_quantity.cpp
   src/msl/quantities/quantity.cpp
 
