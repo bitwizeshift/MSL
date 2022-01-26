@@ -57,12 +57,13 @@ set(header_files
   include/msl/quantities/quantity.hpp
 
   # Pointers
-  include/msl/pointers/raw_pointer.hpp
-  include/msl/pointers/pointer_like.hpp
-  include/msl/pointers/traversable_pointer.hpp
-  include/msl/pointers/nullable_pointer.hpp
   include/msl/pointers/not_null.hpp
+  include/msl/pointers/nullable_pointer.hpp
+  include/msl/pointers/pointer_like.hpp
+  include/msl/pointers/pointer_utilities.hpp
+  include/msl/pointers/raw_pointer.hpp
   include/msl/pointers/tagged_ptr.hpp
+  include/msl/pointers/traversable_pointer.hpp
 )
 
 set(source_files
@@ -80,12 +81,13 @@ set(source_files
   src/msl/quantities/quantity.cpp
 
   # Pointers
-  src/msl/pointers/raw_pointer.cpp
-  src/msl/pointers/pointer_like.cpp
-  src/msl/pointers/traversable_pointer.cpp
-  src/msl/pointers/nullable_pointer.cpp
   src/msl/pointers/not_null.cpp
+  src/msl/pointers/nullable_pointer.cpp
+  src/msl/pointers/pointer_like.cpp
+  src/msl/pointers/pointer_utilities.cpp
+  src/msl/pointers/raw_pointer.cpp
   src/msl/pointers/tagged_ptr.cpp
+  src/msl/pointers/traversable_pointer.cpp
 )
 
 add_library(${PROJECT_NAME}
