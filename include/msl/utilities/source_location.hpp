@@ -31,19 +31,31 @@
 #ifndef MSL_UTILITIES_SOURCE_LOCATION_HPP
 #define MSL_UTILITIES_SOURCE_LOCATION_HPP
 
-#if __has_include(<source_location>)
+// clang-13 using libstdc++11.2 fails due to clang not defining
+// __builtin_source_location as an intrinsic. Without this, we have to use the
+// experimental source location that uses __builtin_LINE and other intrinsics
+//
+// There isn't a great way to detect the standard library used, thus this
+// is checked by detecting clang on non macos systems, where libc++ isn't likely
+// to be used.
+#if defined(__clang__) && (defined(__linux__) || defined(_WIN32)) && \
+    __has_include(<experimental/source_location>)
+# include <experimental/source_location>
+# define MSL_EXPERIMENTAL_SOURCE_LOCATION
+#elif __has_include(<source_location>)
 # include <source_location>
 #elif __has_include(<experimental/source_location>)
 # include <experimental/source_location>
+# define MSL_EXPERIMENTAL_SOURCE_LOCATION
 #else
 # error "No 'source_location' header discovered"
 #endif
 
 namespace msl {
-#if __has_include(<source_location>)
-  using std::source_location;
-#elif __has_include(<experimental/source_location>)
-  using std::experimental::source_location;
+#if defined(MSL_EXPERIMENTAL_SOURCE_LOCATION)
+  using std::experimental::source_location; // NOLINT(misc-unused-using-decls)
+#else
+  using std::source_location; // NOLINT(misc-unused-using-decls)
 #endif
 } // namespace msl
 
