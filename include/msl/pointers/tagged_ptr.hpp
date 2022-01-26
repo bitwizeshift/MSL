@@ -1,7 +1,8 @@
 ////////////////////////////////////////////////////////////////////////////////
 /// \file tagged_ptr.hpp
 ///
-/// \brief TODO(Bitwize): Add description
+/// \brief This header provides the definition of a tagged pointer that
+///        leverages the unclaimed/unused alignment bits of a pointer.
 ////////////////////////////////////////////////////////////////////////////////
 
 /*
@@ -33,12 +34,13 @@
 
 #include "msl/utilities/intrinsics.hpp" // MSL_FORCE_INLINE
 #include "msl/utilities/assert.hpp"     // MSL_ASSERT
+#include "msl/config.hpp"               // MSL_DISABLE_STRICT_MODE
 
 #include <cstdint>  // std::uintptr_t
 #include <cstddef>  // std::size_t
 #include <concepts> // std::convertible_to
 #include <compare>  // std::three_way_compare
-#include <bit>
+#include <bit>      // std::countr_zero
 
 namespace msl {
 
@@ -485,12 +487,16 @@ auto msl::tagged_ptr<T, Bits>::operator==(const tagged_ptr<U, Bits>& other)
   const noexcept -> bool
   requires(std::convertible_to<U*, element_type*>)
 {
+#if MSL_DISABLE_STRICT_MODE
+  return m_pointer == other.m_pointer;
+#else
   // Technically, although almost all implementations will accept
   // `m_pointer == other.m_pointer` as always being correct, the C++ standard
   // does not guarantee that `uintptr_t`s will compare equal from a given `T*`,
   // even if the `T*`s compare equal. To work around this, comparison must
   // compare the pointers themselves -- which are guaranteed to respect this.
   return (get() == other.get()) && (tag() == other.tag());
+#endif
 }
 
 template <typename T, std::size_t Bits>
@@ -498,7 +504,11 @@ MSL_FORCE_INLINE
 auto msl::tagged_ptr<T, Bits>::operator==(std::nullptr_t)
   const noexcept -> bool
 {
+#if MSL_DISABLE_STRICT_MODE
+  return m_pointer == 0u;
+#else
   return (get() == nullptr) && (tag() == 0u);
+#endif
 }
 
 //------------------------------------------------------------------------------
@@ -510,6 +520,9 @@ auto msl::tagged_ptr<T, Bits>::operator<=>(const tagged_ptr<U, Bits>& other)
   const noexcept -> bool
   requires(std::convertible_to<U*, element_type*>)
 {
+#if MSL_DISABLE_STRICT_MODE
+  return m_pointer <=> other.m_pointer;
+#else
   const auto* const l = get();
   const auto* const r = other.get();
 
@@ -517,6 +530,7 @@ auto msl::tagged_ptr<T, Bits>::operator<=>(const tagged_ptr<U, Bits>& other)
     return tag() <=> other.tag();
   }
   return l <=> r;
+#endif
 }
 
 template <typename T, std::size_t Bits>
@@ -524,12 +538,16 @@ MSL_FORCE_INLINE
 auto msl::tagged_ptr<T, Bits>::operator<=>(std::nullptr_t)
   const noexcept
 {
+#if MSL_DISABLE_STRICT_MODE
+  return m_pointer <=> 0u;
+#else
   const auto* const self = get();
 
   if (self == nullptr) {
     return tag() <=> 0u;
   }
   return get() <=> nullptr;
+#endif
 }
 
 #endif /* MSL_POINTERS_TAGGED_PTR_HPP */
