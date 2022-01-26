@@ -10,6 +10,7 @@ set(MSL_CMAKE_TEMPLATE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/templates")
 set(CMAKE_MODULE_PATH "${MSL_CMAKE_MODULE_PATH}" "${CMAKE_MODULE_PATH}")
 
 option(MSL_ENABLE_UNIT_TESTS "Compile and run the unit tests for this library" ON)
+option(MSL_DISABLE_STRICT_MODE "Disables strict/esoteric C++ requirements" OFF)
 
 if (NOT CMAKE_TESTING_ENABLED AND MSL_ENABLE_UNIT_TESTS)
   enable_testing()
@@ -30,6 +31,16 @@ set(MSL_VERSION ${PROJECT_VERSION} CACHE INTERNAL "Version of MSL")
 ##############################################################################
 # Targets
 ##############################################################################
+
+configure_file(
+  "${CMAKE_CURRENT_LIST_DIR}/data/config.hpp.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/include/msl/config.hpp"
+  @ONLY
+)
+
+set(generated_header_files
+  ${CMAKE_CURRENT_BINARY_DIR}/include/msl/config.hpp
+)
 
 set(header_files
   # Utilities
@@ -59,7 +70,11 @@ set(source_files
   src/msl/pointers/tagged_ptr.cpp
 )
 
-add_library(${PROJECT_NAME} ${source_files} ${header_files})
+add_library(${PROJECT_NAME}
+  ${source_files}
+  ${header_files}
+  ${generated_header_files}
+)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
 target_compile_features(${PROJECT_NAME}
@@ -72,8 +87,15 @@ set_target_properties(${PROJECT_NAME}
     CXX_EXTENSIONS OFF
 )
 
+configure_file(
+  "${CMAKE_CURRENT_LIST_DIR}/data/config.hpp.in"
+  "${CMAKE_CURRENT_BINARY_DIR}/include/msl/config.hpp"
+  @ONLY
+)
+
 target_include_directories(${PROJECT_NAME}
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
+  PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   PUBLIC $<INSTALL_INTERFACE:include>
 )
 
