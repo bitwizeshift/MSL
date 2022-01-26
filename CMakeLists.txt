@@ -48,6 +48,10 @@ set(header_files
   include/msl/utilities/intrinsics.hpp
   include/msl/utilities/source_location.hpp
 
+  # Quantities
+  include/msl/quantities/address.hpp
+  include/msl/quantities/address_io.hpp
+
   # Pointers
   include/msl/pointers/raw_pointer.hpp
   include/msl/pointers/pointer_like.hpp
@@ -62,6 +66,10 @@ set(source_files
   src/msl/utilities/assert.cpp
   src/msl/utilities/intrinsics.cpp
   src/msl/utilities/source_location.cpp
+
+  # Quantities
+  src/msl/quantities/address.cpp
+  src/msl/quantities/address_io.cpp
 
   # Pointers
   src/msl/pointers/raw_pointer.cpp
