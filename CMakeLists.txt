@@ -64,6 +64,9 @@ set(header_files
   include/msl/pointers/raw_pointer.hpp
   include/msl/pointers/tagged_ptr.hpp
   include/msl/pointers/traversable_pointer.hpp
+
+  # Blocks
+  include/msl/blocks/memory_block.hpp
 )
 
 set(source_files
@@ -88,6 +91,9 @@ set(source_files
   src/msl/pointers/raw_pointer.cpp
   src/msl/pointers/tagged_ptr.cpp
   src/msl/pointers/traversable_pointer.cpp
+
+  # Buffers
+  src/msl/blocks/memory_block.cpp
 )
 
 add_library(${PROJECT_NAME}
