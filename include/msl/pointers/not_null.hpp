@@ -45,6 +45,7 @@
 #include <type_traits> // std::decay_t
 #include <memory>      // std::pointer_traits
 #include <stdexcept>   // std::logic_error
+#include <typeinfo>    // std::bad_cast
 
 namespace msl {
 
@@ -485,7 +486,7 @@ namespace msl {
   //===========================================================================
 
   //---------------------------------------------------------------------------
-  // Utilities
+  // Factories
   //---------------------------------------------------------------------------
 
   /// \brief Creates a `not_null` object by checking that `ptr` is not null
@@ -567,6 +568,97 @@ namespace msl {
   constexpr auto assume_not_null(T&& ptr)
     noexcept(std::is_nothrow_constructible<typename std::decay<T>::type,T>::value)
     -> not_null<std::decay_t<T>>;
+
+  //---------------------------------------------------------------------------
+  // Utilities
+  //---------------------------------------------------------------------------
+
+  /// \brief Launders the pointer denoted by the not-null pointer \p p
+  ///
+  /// \param p the not-null pointer to launder
+  /// \return the laundered pointer
+  template <typename T>
+  [[nodiscard]]
+  constexpr auto launder(not_null<T*> p) noexcept -> not_null<T*>;
+
+  /// \brief Hints to the compiler that the pointer stored within \p p is
+  ///        aligned to at least an `Align` byte boundary
+  ///
+  /// \tparam Align the alignment
+  /// \param p the (not-null) pointer to align
+  /// \return the not null, hinted to be aligned
+  template <std::size_t Align, typename T>
+  [[nodiscard]]
+  constexpr auto assume_aligned(not_null<T*> p) noexcept -> not_null<T*>;
+
+  //---------------------------------------------------------------------------
+  // Casting
+  //---------------------------------------------------------------------------
+
+  /// \{
+  /// \brief Casts the pointer \p from to the not null of type `To`
+  ///
+  /// \tparam To the type to cast to
+  /// \param from the pointer to cast from
+  /// \return a not null containing the casted pointer
+  template <typename To, typename From>
+  constexpr auto static_pointer_cast(not_null<From*> from) noexcept -> not_null<To*>;
+  template <typename To, typename From>
+  constexpr auto dynamic_pointer_cast(not_null<From*> from) -> not_null<To*>;
+  template <typename To, typename From>
+  constexpr auto const_pointer_cast(not_null<From*> from) noexcept -> not_null<To*>;
+  template <typename To, typename From>
+  auto reinterpret_pointer_cast(not_null<From*> from) noexcept -> not_null<To*>;
+  /// \}
+
+  /// \{
+  /// \brief Casts a not null of pointer \p from to a pointer of type `To`
+  ///
+  /// These casts propagate the casts performed by an unqualified
+  /// argument-dependent-lookup of the underlying `*_pointer_cast` functions.
+  /// This provides interop with `std::shared_ptr` types, and can work with
+  /// user-declared types provided these functions can be called from an
+  /// unqualified context.
+  ///
+  /// \tparam To the type to cast to
+  /// \param from the pointer to cast from
+  /// \return a not null containing the casted pointer
+  template <typename To, typename From>
+  constexpr auto static_pointer_cast(const not_null<From>& from)
+    noexcept -> typename not_null<From>::template rebind<To>
+    requires requires { static_pointer_cast<To>(from.as_nullable() ); };
+  template <typename To, typename From>
+  constexpr auto static_pointer_cast(not_null<From>&& from)
+    noexcept -> typename not_null<From>::template rebind<To>
+    requires requires { static_pointer_cast<To>(std::move(from).as_nullable() ); };
+
+  template <typename To, typename From>
+  constexpr auto dynamic_pointer_cast(const not_null<From>& from)
+    -> typename not_null<From>::template rebind<To>
+    requires requires { dynamic_pointer_cast<To>(from.as_nullable() ); };
+  template <typename To, typename From>
+  constexpr auto dynamic_pointer_cast(not_null<From>&& from)
+    -> typename not_null<From>::template rebind<To>
+    requires requires { dynamic_pointer_cast<To>(std::move(from).as_nullable() ); };
+
+  template <typename To, typename From>
+  constexpr auto const_pointer_cast(const not_null<From>& from)
+    noexcept -> typename not_null<From>::template rebind<To>
+    requires requires { const_pointer_cast<To>(from.as_nullable() ); };
+  template <typename To, typename From>
+  constexpr auto const_pointer_cast(not_null<From>&& from)
+    noexcept -> typename not_null<From>::template rebind<To>
+    requires requires { const_pointer_cast<To>(std::move(from).as_nullable() ); };
+
+  template <typename To, typename From>
+  constexpr auto reinterpret_pointer_cast(not_null<From>&& from)
+    noexcept -> typename not_null<From>::template rebind<To>
+    requires requires { reinterpret_pointer_cast<To>(from.as_nullable() ); };
+  template <typename To, typename From>
+  constexpr auto reinterpret_pointer_cast(not_null<From>&& from)
+    noexcept -> typename not_null<From>::template rebind<To>
+    requires requires { reinterpret_pointer_cast<To>(std::move(from).as_nullable() ); };
+  /// \}
 
   //---------------------------------------------------------------------------
   // Arithmetic
@@ -890,7 +982,7 @@ msl::not_null<T>::not_null(ctor_tag, P&& ptr)
 //=============================================================================
 
 //-----------------------------------------------------------------------------
-// Utilities
+// Factories
 //-----------------------------------------------------------------------------
 
 template <typename T>
@@ -904,6 +996,10 @@ auto msl::check_not_null(T&& ptr, source_location where)
   MSL_LIKELY return assume_not_null(std::forward<T>(ptr));
 }
 
+//-----------------------------------------------------------------------------
+// Utilities
+//-----------------------------------------------------------------------------
+
 template <typename T>
 MSL_FORCE_INLINE constexpr
 auto msl::assume_not_null(T&& ptr)
@@ -911,6 +1007,156 @@ auto msl::assume_not_null(T&& ptr)
   -> not_null<typename std::decay<T>::type>
 {
   return detail::not_null_factory::make(std::forward<T>(ptr));
+}
+
+template <typename T>
+MSL_FORCE_INLINE constexpr
+auto msl::launder(not_null<T*> p)
+  noexcept -> not_null<T*>
+{
+  return assume_not_null(std::launder(p.as_nullable()));
+}
+
+template <std::size_t Align, typename T>
+MSL_FORCE_INLINE constexpr
+auto msl::assume_aligned(not_null<T*> p)
+  noexcept -> not_null<T*>
+{
+  return assume_not_null(intrinsics::assume_aligned<Align>(p.as_nullable()));
+}
+
+//-----------------------------------------------------------------------------
+// Casting
+//-----------------------------------------------------------------------------
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::static_pointer_cast(not_null<From*> from)
+  noexcept -> not_null<To*>
+{
+  return assume_not_null(static_cast<To*>(from.as_nullable()));
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::dynamic_pointer_cast(not_null<From*> from)
+  -> not_null<To*>
+{
+  const auto p = dynamic_cast<To*>(from.as_nullable());
+  if (p == nullptr) MSL_UNLIKELY {
+    throw std::bad_cast{};
+  }
+  return assume_not_null(p);
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::const_pointer_cast(not_null<From*> from)
+  noexcept -> not_null<To*>
+{
+  return assume_not_null(const_cast<To*>(from.as_nullable()));
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE
+auto msl::reinterpret_pointer_cast(not_null<From*> from)
+  noexcept -> not_null<To*>
+{
+  return assume_not_null(reinterpret_cast<To*>(from.as_nullable()));
+}
+
+//-----------------------------------------------------------------------------
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::static_pointer_cast(const not_null<From>& from)
+  noexcept -> typename not_null<From>::template rebind<To>
+  requires requires { static_pointer_cast<To>(from.as_nullable() ); }
+{
+  return assume_not_null(
+    static_pointer_cast<To>(from.as_nullable())
+  );
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::static_pointer_cast(not_null<From>&& from)
+  noexcept -> typename not_null<From>::template rebind<To>
+  requires requires { static_pointer_cast<To>(std::move(from).as_nullable() ); }
+{
+  return assume_not_null(
+    static_pointer_cast<To>(std::move(from).as_nullable())
+  );
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::dynamic_pointer_cast(const not_null<From>& from)
+  -> typename not_null<From>::template rebind<To>
+  requires requires { dynamic_pointer_cast<To>(from.as_nullable() ); }
+{
+  auto p = dynamic_pointer_cast<To>(from.as_nullable());
+  if (p == nullptr) MSL_UNLIKELY {
+    throw std::bad_cast{};
+  }
+  return assume_not_null(std::move(p));
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::dynamic_pointer_cast(not_null<From>&& from)
+  -> typename not_null<From>::template rebind<To>
+  requires requires { dynamic_pointer_cast<To>(std::move(from).as_nullable() ); }
+{
+  auto p = dynamic_pointer_cast<To>(std::move(from).as_nullable());
+  if (p == nullptr) MSL_UNLIKELY {
+    throw std::bad_cast{};
+  }
+  return assume_not_null(std::move(p));
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::const_pointer_cast(const not_null<From>& from)
+  noexcept -> typename not_null<From>::template rebind<To>
+  requires requires { const_pointer_cast<To>(from.as_nullable() ); }
+{
+  return assume_not_null(
+    const_pointer_cast<To>(from.as_nullable())
+  );
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::const_pointer_cast(not_null<From>&& from)
+  noexcept -> typename not_null<From>::template rebind<To>
+  requires requires { const_pointer_cast<To>(std::move(from).as_nullable() ); }
+{
+  return assume_not_null(
+    const_pointer_cast<To>(std::move(from).as_nullable())
+  );
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::reinterpret_pointer_cast(not_null<From>&& from)
+  noexcept -> typename not_null<From>::template rebind<To>
+  requires requires { reinterpret_pointer_cast<To>(from.as_nullable() ); }
+{
+  return assume_not_null(
+    reinterpret_pointer_cast<To>(from.as_nullable())
+  );
+}
+
+template <typename To, typename From>
+MSL_FORCE_INLINE constexpr
+auto msl::reinterpret_pointer_cast(not_null<From>&& from)
+  noexcept -> typename not_null<From>::template rebind<To>
+  requires requires { reinterpret_pointer_cast<To>(std::move(from).as_nullable() ); }
+{
+  return assume_not_null(
+    reinterpret_pointer_cast<To>(std::move(from).as_nullable())
+  );
 }
 
 //-----------------------------------------------------------------------------
