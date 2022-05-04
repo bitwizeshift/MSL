@@ -35,6 +35,8 @@
 # pragma once
 #endif // defined(_MSC_VER)
 
+#include "msl/quantities/digital_quantity.hpp"
+
 #include <type_traits> // std::make_signed_t
 #include <cstddef>     // std::size_t
 #include <limits>      // std::numeric_limits
@@ -339,6 +341,18 @@ namespace msl {
   private:
 
     size_type m_value;
+  };
+
+  template <typename Rep>
+  class quantity<std::byte,Rep> : public digital_quantity<Rep>
+  {
+    using base_type = digital_quantity<Rep>;
+
+  public:
+
+    using base_type::base_type;
+
+    using base_type::operator=;
   };
 
   //============================================================================
