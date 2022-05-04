@@ -22,7 +22,7 @@
   SOFTWARE.
 */
 
-#include <msl/utilities/uninitialized_storage.hpp>
+#include <msl/memory/uninitialized_storage.hpp>
 
 #include <catch2/catch.hpp>
 

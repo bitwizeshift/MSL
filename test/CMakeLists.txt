@@ -16,8 +16,8 @@ set(source_files
   # Quantities
   src/quantities/quantity.test.cpp
 
-  # Utilities
-  src/utilities/uninitialized_storage.test.cpp
+  # Memory
+  src/memory/uninitialized_storage.test.cpp
 )
 
 add_executable(${PROJECT_NAME}.test

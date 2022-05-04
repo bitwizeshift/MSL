@@ -49,8 +49,6 @@ set(header_files
   include/msl/utilities/assert.hpp
   include/msl/utilities/intrinsics.hpp
   include/msl/utilities/source_location.hpp
-  include/msl/utilities/uninitialized_storage.hpp
-  include/msl/utilities/intrusive_pointer_stack.hpp
 
   # Quantities
   include/msl/quantities/address.hpp
@@ -68,6 +66,10 @@ set(header_files
   include/msl/pointers/tagged_ptr.hpp
   include/msl/pointers/traversable_pointer.hpp
 
+  # Memory
+  include/msl/memory/intrusive_pointer_stack.hpp
+  include/msl/memory/uninitialized_storage.hpp
+
   # Blocks
   include/msl/blocks/memory_block.hpp
 )
@@ -79,8 +81,8 @@ set(source_files
   # Pointers
   src/msl/pointers/not_null.cpp
 
-  # Utilities
-  src/msl/utilities/intrusive_pointer_stack.cpp
+  # Memory
+  src/msl/memory/intrusive_pointer_stack.cpp
 )
 
 add_library(${PROJECT_NAME}
