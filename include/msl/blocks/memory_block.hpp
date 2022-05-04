@@ -108,12 +108,6 @@ namespace msl {
     //-------------------------------------------------------------------------
   public:
 
-    /// \{
-    /// \brief Constructs a null memory block
-    consteval memory_block() noexcept;
-    consteval memory_block(nullblock_t) noexcept;
-    /// \}
-
     memory_block(const memory_block&) = default;
 
     //-------------------------------------------------------------------------
@@ -278,27 +272,6 @@ auto msl::memory_block::from_pointer_and_length(
 ) noexcept -> memory_block
 {
   return from_range(p.as_nullable(), p.as_nullable() + length.count());
-}
-
-//-----------------------------------------------------------------------------
-// Constructors / Assignment
-//-----------------------------------------------------------------------------
-
-inline consteval
-msl::memory_block::memory_block()
-  noexcept
-  : memory_block{nullblock}
-{
-
-}
-
-inline consteval
-msl::memory_block::memory_block(nullblock_t)
-  noexcept
-  : m_begin{nullptr},
-    m_end{nullptr}
-{
-
 }
 
 //-----------------------------------------------------------------------------
