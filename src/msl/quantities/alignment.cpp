@@ -27,6 +27,7 @@
 #include <atomic>     // std::atomic
 #include <exception>  // std::terminate
 #include <functional> // std::invoke
+#include <string>     // std::to_string
 
 namespace msl {
 namespace {

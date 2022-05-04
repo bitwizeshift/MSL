@@ -3,6 +3,7 @@
 #include <atomic>     // std::atomic<T>
 #include <cstdlib>    // std::abort
 #include <functional> // std::invoke
+#include <string>     // std::string
 
 namespace msl {
 namespace {
