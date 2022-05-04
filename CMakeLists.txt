@@ -32,6 +32,8 @@ set(MSL_VERSION ${PROJECT_VERSION} CACHE INTERNAL "Version of MSL")
 # Targets
 ##############################################################################
 
+include(AddSelfContainmentTest)
+
 configure_file(
   "${CMAKE_CURRENT_LIST_DIR}/data/config.hpp.in"
   "${CMAKE_CURRENT_BINARY_DIR}/include/msl/config.hpp"
@@ -70,30 +72,12 @@ set(header_files
 )
 
 set(source_files
-  # Utilities
-  src/msl/utilities/assert.cpp
-  src/msl/utilities/intrinsics.cpp
-  src/msl/utilities/source_location.cpp
-  src/msl/utilities/uninitialized_storage.cpp
-
   # Quantities
-  src/msl/quantities/address.cpp
-  src/msl/quantities/address_io.cpp
   src/msl/quantities/alignment.cpp
-  src/msl/quantities/digital_quantity.cpp
-  src/msl/quantities/quantity.cpp
 
   # Pointers
   src/msl/pointers/not_null.cpp
-  src/msl/pointers/nullable_pointer.cpp
-  src/msl/pointers/pointer_like.cpp
-  src/msl/pointers/pointer_utilities.cpp
-  src/msl/pointers/raw_pointer.cpp
-  src/msl/pointers/tagged_ptr.cpp
-  src/msl/pointers/traversable_pointer.cpp
 
-  # Buffers
-  src/msl/blocks/memory_block.cpp
 )
 
 add_library(${PROJECT_NAME}
@@ -113,10 +97,15 @@ set_target_properties(${PROJECT_NAME}
     CXX_EXTENSIONS OFF
 )
 
-configure_file(
-  "${CMAKE_CURRENT_LIST_DIR}/data/config.hpp.in"
-  "${CMAKE_CURRENT_BINARY_DIR}/include/msl/config.hpp"
-  @ONLY
+add_self_containment_test(${PROJECT_NAME}.containment
+  ${header_files}
+  ${generated_header_files}
+)
+add_self_containment_test(${PROJECT_NAME}::${PROJECT_NAME}.containment
+  ALIAS ${PROJECT_NAME}.containment
+)
+target_link_libraries(${PROJECT_NAME}.containment
+  PRIVATE ${PROJECT_NAME}::${PROJECT_NAME}
 )
 
 target_include_directories(${PROJECT_NAME}
