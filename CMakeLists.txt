@@ -50,6 +50,7 @@ set(header_files
   include/msl/utilities/intrinsics.hpp
   include/msl/utilities/source_location.hpp
   include/msl/utilities/uninitialized_storage.hpp
+  include/msl/utilities/intrusive_pointer_stack.hpp
 
   # Quantities
   include/msl/quantities/address.hpp
@@ -78,6 +79,8 @@ set(source_files
   # Pointers
   src/msl/pointers/not_null.cpp
 
+  # Utilities
+  src/msl/utilities/intrusive_pointer_stack.cpp
 )
 
 add_library(${PROJECT_NAME}
