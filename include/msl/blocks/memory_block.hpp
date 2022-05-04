@@ -37,6 +37,7 @@
 #include <cstddef>    // std::size_t, std::byte
 #include <ranges>     // std::ranges::begin, etc
 #include <functional> // std::less_equal
+#include <initializer_list> // std::initializer_list
 
 namespace msl {
   struct nullblock_t{};
@@ -88,8 +89,7 @@ namespace msl {
     /// \return a memory block
     template <typename Range>
     static constexpr auto from_range(Range& range)
-      noexcept -> memory_block
-      requires(std::ranges::contiguous_range<Range>);
+      noexcept -> memory_block;
 
     /// \brief Constructs this memory block from a pointer and length
     ///
@@ -198,13 +198,11 @@ namespace msl {
     constexpr auto fill(ForwardIt first, Sentinel last) noexcept -> void
       requires(std::forward_iterator<ForwardIt> && std::sentinel_for<Sentinel,ForwardIt>);
 
-    /// \brief Fills the contents of this memroy region by repeating the bytes
-    ///        specified in the \p range
+    /// \brief Fills the content of this memory region by repeating the bytes
+    ///        in the initializer list of entries
     ///
-    /// \param range the sequence of values to repeat
-    template <typename Range>
-    constexpr auto fill(const Range& range) noexcept -> void
-      requires(std::ranges::range<Range>);
+    /// \param ilist the initializer list of entries
+    constexpr auto fill(std::initializer_list<std::byte> ilist) noexcept -> void;
 
     //-------------------------------------------------------------------------
     // Comparisons
@@ -249,7 +247,7 @@ auto msl::memory_block::from_range(Iterator start, Sentinel end)
   // the end pointer is to compute the distance and add it to the start pointer
   //
   // Whether this is a realistic thing to encounter is uncertain
-  const auto distance = std::ranges::distance(start, end);
+  const auto distance = std::distance(start, end);
   const auto p = std::to_address(start);
 
   return memory_block{p, p + distance};
@@ -268,7 +266,6 @@ template <typename Range>
 MSL_FORCE_INLINE constexpr
 auto msl::memory_block::from_range(Range& range)
   noexcept -> memory_block
-  requires(std::ranges::contiguous_range<Range>)
 {
   return from_range(std::ranges::begin(range), std::ranges::end(range));
 }
@@ -330,11 +327,14 @@ inline constexpr
 auto msl::memory_block::contains(const std::byte* p)
   const noexcept -> bool
 {
+  // TODO(bitwizeshift): consider renaming this 'maybe_contains'?
+
   // Comparing pointers from possibly different sub-objects is UB; however,
   // the various functional comparators define a total-ordering which can at
   // least allow for a simple containment check to effectively operate.
   //
-  // TODO(bitwizeshift): determine whether this is guaranteed to be correct.
+  // TODO(bitwizeshift):
+  //   Determine whether this is guaranteed to always be correct.
   constexpr auto compare = std::less_equal<const std::byte*>{};
 
   return compare(m_begin, p) && compare(p, m_end);
@@ -382,10 +382,18 @@ auto msl::memory_block::fill(ForwardIt first, Sentinel last)
   noexcept -> void
   requires(std::forward_iterator<ForwardIt> && std::sentinel_for<Sentinel,ForwardIt>)
 {
+  // If we were given a null-range, bail out early. We can't read from an empty
+  // range.
+  //
+  // TODO(bitwizeshift): should this be an assert or contract violation?
+  if (first == last) MSL_UNLIKELY {
+    return;
+  }
+
   auto it = first;
   const auto end = end_address();
 
-  for (auto jt = start_address(); jt != end_address(); ++jt) {
+  for (auto jt = start_address(); jt != end; ++jt) {
     *jt = *it;
 
     // wrap-around logic
@@ -396,13 +404,11 @@ auto msl::memory_block::fill(ForwardIt first, Sentinel last)
   }
 }
 
-template <typename Range>
 inline constexpr
-auto msl::memory_block::fill(const Range& range)
+auto msl::memory_block::fill(std::initializer_list<std::byte> ilist)
   noexcept -> void
-  requires(std::ranges::range<Range>)
 {
-  fill(std::ranges::begin(range), std::ranges::end(range));
+  fill(ilist.begin(), ilist.end());
 }
 
 MSL_FORCE_INLINE constexpr
