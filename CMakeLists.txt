@@ -69,6 +69,7 @@ set(header_files
   # Memory
   include/msl/memory/intrusive_pointer_stack.hpp
   include/msl/memory/uninitialized_storage.hpp
+  include/msl/memory/virtual_memory.hpp
 
   # Blocks
   include/msl/blocks/memory_block.hpp
@@ -81,9 +82,22 @@ set(source_files
   # Pointers
   src/msl/pointers/not_null.cpp
 
+  # Cells
+  src/msl/cells/cell.cpp
+
   # Memory
   src/msl/memory/intrusive_pointer_stack.cpp
 )
+
+if (WIN32)
+  list(APPEND source_files
+    src/msl/memory/win32/virtual_memory_impl.cpp
+  )
+elseif (APPLE OR UNIX)
+  list(APPEND source_files
+    src/msl/memory/posix/virtual_memory_impl.cpp
+  )
+endif ()
 
 add_library(${PROJECT_NAME}
   ${source_files}
@@ -114,6 +128,7 @@ target_link_libraries(${PROJECT_NAME}.containment
 )
 
 target_include_directories(${PROJECT_NAME}
+  PRIVATE ${CMAKE_CURRENT_LIST_DIR}
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/include>
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   PUBLIC $<INSTALL_INTERFACE:include>
