@@ -40,10 +40,6 @@
 #include <initializer_list> // std::initializer_list
 
 namespace msl {
-  struct nullblock_t{};
-
-  inline constexpr auto nullblock = nullblock_t{};
-
   /////////////////////////////////////////////////////////////////////////////
   /// \brief Wrapper around a block of memory, containing both the size
   ///        and the address of the memory block.
@@ -72,11 +68,11 @@ namespace msl {
     /// \return a memory block
     template <typename Iterator, typename Sentinel>
     static constexpr auto from_range(Iterator start, Sentinel end)
-      noexcept -> memory_block
+      -> memory_block
       requires(std::contiguous_iterator<Iterator> && std::sentinel_for<Sentinel,Iterator>);
     template <typename Iterator>
     static constexpr auto from_range(Iterator start, Iterator end)
-      noexcept -> memory_block
+      -> memory_block
       requires(std::contiguous_iterator<Iterator>);
     /// \}
 
@@ -89,7 +85,7 @@ namespace msl {
     /// \return a memory block
     template <typename Range>
     static constexpr auto from_range(Range& range)
-      noexcept -> memory_block;
+      -> memory_block;
 
     /// \brief Constructs this memory block from a pointer and length
     ///
@@ -140,7 +136,7 @@ namespace msl {
     ///
     /// \param p the pointer to check
     /// \return `true` if it exists
-    constexpr auto contains(const std::byte* p) const noexcept -> bool;
+    constexpr auto contains(not_null<const std::byte*> p) const noexcept -> bool;
 
     //-------------------------------------------------------------------------
     // Element Access
@@ -150,7 +146,7 @@ namespace msl {
     /// \brief Retrieves a pointer to the start of this data block
     ///
     /// \return the pointer to the data block
-    constexpr auto data() const noexcept -> std::byte*;
+    constexpr auto data() const noexcept -> not_null<std::byte*>;
 
     // Note: this class defines `start_address` and `end_address` rather than
     //       typical begin/end for iterators to prevent this class from being
@@ -162,14 +158,14 @@ namespace msl {
     /// This is the same as `data()`
     ///
     /// \return the pointer to the data block
-    constexpr auto start_address() const noexcept -> std::byte*;
+    constexpr auto start_address() const noexcept -> not_null<std::byte*>;
 
     /// \brief Retrieves the end address of this memory block
     ///
     /// \note That the end address is 1 past the end of the memory block
     ///
     /// \return the pointer to the end of the data block
-    constexpr auto end_address() const noexcept -> std::byte*;
+    constexpr auto end_address() const noexcept -> not_null<std::byte*>;
 
     //-------------------------------------------------------------------------
     // Modifiers
@@ -204,22 +200,21 @@ namespace msl {
   public:
 
     auto operator==(const memory_block& other) const -> bool = default;
-    constexpr auto operator==(nullblock_t) const -> bool;
 
     //-------------------------------------------------------------------------
     // Private Members
     //-------------------------------------------------------------------------
   private:
 
-    std::byte* m_begin;
-    std::byte* m_end;
+    not_null<std::byte*> m_begin;
+    not_null<std::byte*> m_end;
 
     //-------------------------------------------------------------------------
     // Private Constructors
     //-------------------------------------------------------------------------
   private:
 
-    constexpr memory_block(std::byte* begin, std::byte* end) noexcept;
+    constexpr memory_block(not_null<std::byte*> begin, not_null<std::byte*> end) noexcept;
   };
 
 } // namespace msl
@@ -231,7 +226,7 @@ namespace msl {
 template <typename Iterator, typename Sentinel>
 MSL_FORCE_INLINE constexpr
 auto msl::memory_block::from_range(Iterator start, Sentinel end)
-  noexcept -> memory_block
+  -> memory_block
   requires(std::contiguous_iterator<Iterator> && std::sentinel_for<Sentinel,Iterator>)
 {
   // 'std::to_address' is only guaranteed to work on iterators, not sentinels.
@@ -240,30 +235,36 @@ auto msl::memory_block::from_range(Iterator start, Sentinel end)
   // explicitly retrievable address, and so the only way to properly determine
   // the end pointer is to compute the distance and add it to the start pointer
   //
-  // Whether this is a realistic thing to encounter is uncertain
+  // Such a situation could occur for a null-terminator sentinel for C-strings,
+  // for example -- since the terminator has no knowledge of distance, but the
+  // range is logically contiguous. Whether this would actually happen in
+  // practice is a different matter.
   const auto distance = std::distance(start, end);
-  const auto p = std::to_address(start);
+  MSL_ASSERT(distance >= 0);
+  const auto p = check_not_null(std::to_address(start));
 
-  return memory_block{p, p + distance};
+  return from_pointer_and_length(p, bytes{static_cast<std::size_t>(distance)});
 }
 
 template <typename Iterator>
 MSL_FORCE_INLINE constexpr
 auto msl::memory_block::from_range(Iterator start, Iterator end)
-  noexcept -> memory_block
+  -> memory_block
   requires(std::contiguous_iterator<Iterator>)
 {
-  return memory_block{std::to_address(start), std::to_address(end)};
+  return memory_block{
+    check_not_null(std::to_address(start)),
+    check_not_null(std::to_address(end))
+  };
 }
 
 template <typename Range>
 MSL_FORCE_INLINE constexpr
 auto msl::memory_block::from_range(Range& range)
-  noexcept -> memory_block
+  -> memory_block
 {
   return from_range(std::ranges::begin(range), std::ranges::end(range));
 }
-
 
 MSL_FORCE_INLINE constexpr
 auto msl::memory_block::from_pointer_and_length(
@@ -271,7 +272,7 @@ auto msl::memory_block::from_pointer_and_length(
   bytes length
 ) noexcept -> memory_block
 {
-  return from_range(p.as_nullable(), p.as_nullable() + length.count());
+  return memory_block{p, p + length.count()};
 }
 
 //-----------------------------------------------------------------------------
@@ -297,7 +298,7 @@ auto msl::memory_block::size()
 //-----------------------------------------------------------------------------
 
 inline constexpr
-auto msl::memory_block::contains(const std::byte* p)
+auto msl::memory_block::contains(not_null<const std::byte*> p)
   const noexcept -> bool
 {
   // TODO(bitwizeshift): consider renaming this 'maybe_contains'?
@@ -310,7 +311,7 @@ auto msl::memory_block::contains(const std::byte* p)
   //   Determine whether this is guaranteed to always be correct.
   constexpr auto compare = std::less_equal<const std::byte*>{};
 
-  return compare(m_begin, p) && compare(p, m_end);
+  return compare(m_begin.get(), p.get()) && compare(p.get(), m_end.get());
 }
 
 //-----------------------------------------------------------------------------
@@ -319,21 +320,21 @@ auto msl::memory_block::contains(const std::byte* p)
 
 inline constexpr
 auto msl::memory_block::data()
-  const noexcept -> std::byte*
+  const noexcept -> not_null<std::byte*>
 {
   return m_begin;
 }
 
 inline constexpr
 auto msl::memory_block::start_address()
-  const noexcept -> std::byte*
+  const noexcept -> not_null<std::byte*>
 {
   return m_begin;
 }
 
 inline constexpr
 auto msl::memory_block::end_address()
-  const noexcept -> std::byte*
+  const noexcept -> not_null<std::byte*>
 {
   return m_end;
 }
@@ -384,19 +385,12 @@ auto msl::memory_block::fill(std::initializer_list<std::byte> ilist)
   fill(ilist.begin(), ilist.end());
 }
 
-MSL_FORCE_INLINE constexpr
-auto msl::memory_block::operator==(nullblock_t)
-  const -> bool
-{
-  return empty();
-}
-
 //-----------------------------------------------------------------------------
 // Private Constructors
 //-----------------------------------------------------------------------------
 
 MSL_FORCE_INLINE constexpr
-msl::memory_block::memory_block(std::byte* begin, std::byte* end)
+msl::memory_block::memory_block(not_null<std::byte*> begin, not_null<std::byte*> end)
   noexcept
   : m_begin{begin},
     m_end{end}
