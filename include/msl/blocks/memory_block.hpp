@@ -29,6 +29,7 @@
 #endif
 
 #include "msl/quantities/digital_quantity.hpp"
+#include "msl/quantities/quantity.hpp"
 #include "msl/pointers/not_null.hpp"
 #include "msl/utilities/assert.hpp"
 #include "msl/utilities/intrinsics.hpp"
@@ -217,6 +218,50 @@ namespace msl {
     constexpr memory_block(not_null<std::byte*> begin, not_null<std::byte*> end) noexcept;
   };
 
+  //---------------------------------------------------------------------------
+  // Traversal
+  //---------------------------------------------------------------------------
+
+  /// \brief Computes what the next contiguously adjacent block is
+  ///
+  /// \note This function is only legal if used on memory blocks that are
+  ///       contiguous in memory. If there is no validly addressable block after
+  ///       \p b , then this function will result in undefined behavior
+  ///
+  /// \param b the block
+  /// \param n the number of blocks after
+  /// \return the memory block
+  constexpr auto next_block(memory_block b, uquantity<memory_block> n = 1)
+    noexcept -> memory_block;
+
+  /// \brief Computes what the previous contiguously adjacent block is
+  ///
+  /// \note This function is only legal if used on memory blocks that are
+  ///       contiguous in memory. If there is no validly addressable block after
+  ///       \p b , then this function will result in undefined behavior
+  ///
+  /// \param b the block
+  /// \param n the number of blocks after
+  /// \return the memory block
+  constexpr auto previous_block(memory_block b, uquantity<memory_block> n = 1)
+    noexcept -> memory_block;
+
+  //===========================================================================
+  // class : memory_block_order
+  //===========================================================================
+
+  /////////////////////////////////////////////////////////////////////////////
+  /// \brief A comparator type to provide a total ordering of memory blocks
+  ///
+  /// This is necessary for if a memory block were to be used as the key in a
+  /// map, for example.
+  /////////////////////////////////////////////////////////////////////////////
+  struct memory_block_order
+  {
+    constexpr auto operator()(const memory_block& lhs, const memory_block& rhs)
+      const noexcept -> bool;
+  };
+
 } // namespace msl
 
 //-----------------------------------------------------------------------------
@@ -396,6 +441,48 @@ msl::memory_block::memory_block(not_null<std::byte*> begin, not_null<std::byte*>
     m_end{end}
 {
 
+}
+
+//-----------------------------------------------------------------------------
+// Traversal
+//-----------------------------------------------------------------------------
+
+inline constexpr
+auto msl::next_block(memory_block b, uquantity<memory_block> n)
+  noexcept -> memory_block
+{
+  const auto size = b.size();
+  const auto offset = size * n.count();
+
+  const auto p = b.start_address() + offset.count();
+  return memory_block::from_pointer_and_length(p, size);
+}
+
+inline constexpr
+auto msl::previous_block(memory_block b, uquantity<memory_block> n)
+  noexcept -> memory_block
+{
+  const auto size = b.size();
+  const auto offset = size * n.count();
+
+  const auto p = b.start_address() - offset.count();
+  return memory_block::from_pointer_and_length(p, size);
+}
+
+//=============================================================================
+// class : memory_block_order
+//=============================================================================
+
+MSL_FORCE_INLINE constexpr
+auto msl::memory_block_order::operator()(const memory_block& lhs, const memory_block& rhs)
+  const noexcept -> bool
+{
+  constexpr auto compare = std::less<const std::byte*>{};
+
+  if (lhs.start_address() == rhs.start_address()) {
+    return compare(lhs.end_address().get(), rhs.end_address().get());
+  }
+  return compare(lhs.start_address().get(), rhs.start_address().get());
 }
 
 #endif /* MSL_BLOCKS_MEMORY_BLOCK_HPP */

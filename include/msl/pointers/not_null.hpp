@@ -46,6 +46,7 @@
 #include <memory>      // std::pointer_traits
 #include <stdexcept>   // std::logic_error
 #include <typeinfo>    // std::bad_cast
+#include <iterator>    // std::iterator_traits
 
 namespace msl {
 
@@ -758,6 +759,19 @@ namespace msl {
   constexpr auto operator>=(const T& lhs, const not_null<U>& rhs) noexcept -> bool;
 
 } // namespace msl
+
+namespace std {
+  template <typename T>
+  struct iterator_traits<::msl::not_null<T>> {
+    using traits_type = std::iterator_traits<T>;
+
+    using difference_type = typename traits_type::difference_type;
+    using value_type = typename traits_type::value_type;
+    using pointer = typename traits_type::pointer;
+    using reference = typename traits_type::reference;
+    using iterator_category = typename traits_type::iterator_category;
+  };
+} // namespace std
 
 //=============================================================================
 // detail utilities : not_null
