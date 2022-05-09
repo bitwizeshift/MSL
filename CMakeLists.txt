@@ -82,9 +82,6 @@ set(source_files
   # Pointers
   src/msl/pointers/not_null.cpp
 
-  # Cells
-  src/msl/cells/cell.cpp
-
   # Memory
   src/msl/memory/intrusive_pointer_stack.cpp
 )
