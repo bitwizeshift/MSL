@@ -1,0 +1,6 @@
+# Building / Install directories
+build/
+install/
+
+# CMake
+CMakeUserPresets.json
