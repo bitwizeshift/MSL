@@ -48,11 +48,17 @@ namespace msl {
   /// be used until after it has first been commited with a call to
   /// \ref virtual_memory_commit
   ///
+  /// \throw std::system_error with the error code on failure
+  /// \throw std::runtime_error if not available for target system
+  ///
   /// \param n the number of pages to reserve
   /// \return pointer to the reserved memory
   auto virtual_memory_reserve(std::size_t n) -> not_null<std::byte*>;
 
   /// \brief Commits \p n pages of memory to virtual memory
+  ///
+  /// \throw std::system_error with the error code on failure
+  /// \throw std::runtime_error if not available for target system
   ///
   /// \param memory Memory pointing to a page to commit
   /// \param n The number of pages to commit
@@ -61,11 +67,17 @@ namespace msl {
 
   /// \brief Decommits \p n pages of memory to virtual memory
   ///
+  /// \throw std::system_error with the error code on failure
+  /// \throw std::runtime_error if not available for target system
+  ///
   /// \param memory Memory pointing to a page to decommit
   /// \param n The number of pages to decommit
   auto virtual_memory_decommit(not_null<std::byte*> memory, std::size_t n) -> void;
 
   /// \brief Releases \p n pages of virtual memory
+  ///
+  /// \throw std::system_error with the error code on failure
+  /// \throw std::runtime_error if not available for target system
   ///
   /// \param memory The memory originally returned from virtual_memory_reserve
   /// \param n The number of pages to release

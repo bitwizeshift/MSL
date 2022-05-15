@@ -84,6 +84,7 @@ set(source_files
 
   # Memory
   src/msl/memory/intrusive_pointer_stack.cpp
+  src/msl/memory/virtual_memory.cpp
 )
 
 if (WIN32)
@@ -93,6 +94,10 @@ if (WIN32)
 elseif (APPLE OR UNIX)
   list(APPEND source_files
     src/msl/memory/posix/virtual_memory_impl.cpp
+  )
+else ()
+  list(APPEND source_files
+    src/msl/memory/default/virtual_memory_impl.cpp
   )
 endif ()
 

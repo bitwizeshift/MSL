@@ -53,7 +53,7 @@ auto msl::virtual_memory::reserve(uquantity<page> pages)
 
 msl::virtual_memory::virtual_memory(virtual_memory&& other)
   noexcept
-  : m_data{std::exchange(other.m_data, nullptr)},
+  : m_data{other.release()},
     m_pages{other.m_pages}
 {
 
@@ -84,15 +84,16 @@ auto msl::virtual_memory::operator=(virtual_memory&& other)
 //-----------------------------------------------------------------------------
 
 auto msl::virtual_memory::operator[](std::size_t n)
-  -> page
+  const noexcept -> page
 {
-  const auto p = m_data + (n * virtual_memory_page_size());
+  MSL_ASSERT(m_data != nullptr, "Indexing a released virtual_memory object");
+  const auto p = assume_not_null(m_data) + (n * virtual_memory_page_size()).count();
 
-  return page::from_pointer_and_length(assume_not_null(p), page_size());
+  return page::from_pointer_and_length(p, page_size());
 }
 
 auto msl::virtual_memory::at(std::size_t n)
-  -> page
+  const -> page
 {
   if (n >= m_pages) MSL_UNLIKELY {
     throw std::out_of_range{

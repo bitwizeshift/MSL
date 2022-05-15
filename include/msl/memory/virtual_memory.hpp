@@ -24,16 +24,24 @@
 #ifndef MSL_MEMORY_VIRTUAL_MEMORY_HPP
 #define MSL_MEMORY_VIRTUAL_MEMORY_HPP
 
-#include "msl/blocks/memory_block.hpp"
-#include "msl/quantities/digital_quantity.hpp"
-#include "msl/quantities/quantity.hpp"
-#include "msl/utilities/intrinsics.hpp"
 #if defined(_MSC_VER)
 # pragma once
 #endif
 
+#include "msl/blocks/memory_block.hpp"
+#include "msl/quantities/digital_quantity.hpp"
+#include "msl/quantities/quantity.hpp"
+#include "msl/utilities/intrinsics.hpp"
+
 namespace msl {
 
+  /////////////////////////////////////////////////////////////////////////////
+  /// \brief An RAII wrapper around virtual memory access
+  ///
+  /// This provides access to virtual memory in a safe and manageable way.
+  /// `virtual_memory` objects can only be constructed by reserving the object,
+  /// which
+  /////////////////////////////////////////////////////////////////////////////
   class virtual_memory
   {
     //-------------------------------------------------------------------------
@@ -88,9 +96,22 @@ namespace msl {
     /// \return the pointer
     auto data() const noexcept -> std::byte*;
 
-    auto operator[](std::size_t n) -> page;
+    /// \brief Accesses the page at offset \p n
+    ///
+    /// \note The returned page will not be usable unless it has been committed
+    ///
+    /// \pre n must be less than `pages()`
+    /// \return the page at the offset
+    auto operator[](std::size_t n) const noexcept -> page;
 
-    auto at(std::size_t n) -> page;
+    /// \brief Accesses the page at offset \p n, with checking
+    ///
+    /// \note The returned page will not be usable unless it has been committed
+    ///
+    /// \throw std::out_of_range if `n >= pages()`
+    /// \pre n must be less than `pages()`
+    /// \return the page at the offset
+    auto at(std::size_t n) const -> page;
 
     //-------------------------------------------------------------------------
     // Capacity
@@ -120,13 +141,41 @@ namespace msl {
 
     /// \brief Commits the \p n'th page to virtual memory
     ///
+    /// \throw std::system_error containing the error code on failure
+    /// \throw std::runtime_error if not implementable on the target system
+    ///
     /// \param n the page number to commit
-    auto commit(std::size_t n) -> memory_block;
+    /// \return the committed page
+    auto commit(std::size_t n) -> page;
+
+    /// \brief Commits the specified page \p p
+    ///
+    /// \throw std::system_error containing the error code on failure
+    /// \throw std::runtime_error if not implementable on the target system
+    ///
+    /// \param p the page to commit
+    /// \return \p p
+    auto commit(page p) -> page;
+
+    //-------------------------------------------------------------------------
 
     /// \brief Decommits the \p n'th page
     ///
+    /// \throw std::system_error containing the error code on failure
+    /// \throw std::runtime_error if not implementable on the target system
+    ///
     /// \param n the page number to decommit
     auto decommit(std::size_t n) -> void;
+
+    /// \brief Decommits the specified page \p p
+    ///
+    /// \throw std::system_error containing the error code on failure
+    /// \throw std::runtime_error if not implementable on the target system
+    ///
+    /// \param p the page to decommit
+    auto decommit(page p) -> void;
+
+    //-------------------------------------------------------------------------
 
     /// \brief Releases the virtual memory controlled by this class
     ///
@@ -154,6 +203,13 @@ namespace msl {
     /// \param data the reserved pointer
     /// \param pages the number of pages
     virtual_memory(std::byte* data, uquantity<page> pages) noexcept;
+
+    /// \brief Helper to convert pages to indexes
+    ///
+    /// \pre p must be a block returned from `operator[]` or `at`
+    /// \param p the page
+    /// \return the index
+    auto page_to_index(const page& p) noexcept -> std::size_t;
   };
 
 } // namespace msl
@@ -199,6 +255,18 @@ auto msl::virtual_memory::empty()
 //-----------------------------------------------------------------------------
 
 MSL_FORCE_INLINE
+auto msl::virtual_memory::commit(page p) -> page
+{
+  return commit(page_to_index(p));
+}
+
+MSL_FORCE_INLINE
+auto msl::virtual_memory::decommit(page p) -> void
+{
+  decommit(page_to_index(p));
+}
+
+MSL_FORCE_INLINE
 auto msl::virtual_memory::release()
   noexcept -> std::byte*
 {
@@ -213,6 +281,21 @@ auto msl::virtual_memory::swap(virtual_memory& other)
 
   swap(m_data, other.m_data);
   swap(m_pages, other.m_pages);
+}
+
+//-----------------------------------------------------------------------------
+// Private Helpers
+//-----------------------------------------------------------------------------
+
+inline
+auto msl::virtual_memory::page_to_index(const page& p)
+  noexcept -> std::size_t
+{
+  const auto distance_in_bytes = p.start_address().get() - m_data;
+
+  MSL_ASSERT((distance_in_bytes % page_size().count()) == 0);
+
+  return static_cast<std::size_t>(distance_in_bytes / page_size().count());
 }
 
 //-----------------------------------------------------------------------------
