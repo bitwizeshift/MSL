@@ -83,6 +83,10 @@ namespace msl {
     /// \post the top element is changed
     auto pop() noexcept -> void;
 
+    /// \brief Resets the state of this intrusive pointer stack to construction
+    ///        state
+    constexpr auto reset() noexcept -> void;
+
     //-------------------------------------------------------------------------
     // Observers
     //-------------------------------------------------------------------------
@@ -147,7 +151,7 @@ MSL_FORCE_INLINE
 auto msl::intrusive_pointer_stack::push(not_null<std::byte*> p)
   noexcept -> void
 {
-  std::memcpy(p.as_nullable(), &m_head, sizeof(std::byte**));
+  std::memcpy(p.as_nullable(), &m_head, sizeof(std::byte*));
   m_head = p.as_nullable();
 }
 
@@ -158,9 +162,16 @@ auto msl::intrusive_pointer_stack::pop()
   MSL_ASSERT(m_head != nullptr);
 
   auto result = static_cast<std::byte**>(nullptr);
-  std::memcpy(&result, m_head, sizeof(std::byte**));
+  std::memcpy(&result, m_head, sizeof(std::byte*));
 
   m_head = (*result);
+}
+
+MSL_FORCE_INLINE constexpr
+auto msl::intrusive_pointer_stack::reset()
+  noexcept -> void
+{
+  m_head = nullptr;
 }
 
 //-----------------------------------------------------------------------------

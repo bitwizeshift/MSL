@@ -21,7 +21,7 @@
  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  SOFTWARE.
 */
-#include "msl/memory/intrusive_pointer_stack.hpp"
+#include "msl/pointers/intrusive_pointer_stack.hpp"
 
 //-----------------------------------------------------------------------------
 // Lookup

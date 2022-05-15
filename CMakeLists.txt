@@ -65,9 +65,9 @@ set(header_files
   include/msl/pointers/raw_pointer.hpp
   include/msl/pointers/tagged_ptr.hpp
   include/msl/pointers/traversable_pointer.hpp
+  include/msl/pointers/intrusive_pointer_stack.hpp
 
   # Memory
-  include/msl/memory/intrusive_pointer_stack.hpp
   include/msl/memory/uninitialized_storage.hpp
   include/msl/memory/virtual_memory.hpp
 
@@ -81,9 +81,9 @@ set(source_files
 
   # Pointers
   src/msl/pointers/not_null.cpp
+  src/msl/pointers/intrusive_pointer_stack.cpp
 
   # Memory
-  src/msl/memory/intrusive_pointer_stack.cpp
   src/msl/memory/virtual_memory.cpp
 )
 
