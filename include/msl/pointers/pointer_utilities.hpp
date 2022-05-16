@@ -31,6 +31,7 @@
 #ifndef MSL_POINTERS_POINTER_UTILITIES_HPP
 #define MSL_POINTERS_POINTER_UTILITIES_HPP
 
+#include "msl/pointers/not_null.hpp"
 #include "msl/pointers/raw_pointer.hpp"
 #include "msl/quantities/alignment.hpp"
 #include "msl/utilities/assert.hpp"
@@ -55,6 +56,12 @@ namespace msl {
   ///
   /// This traversal using `std::byte` can be removed by defining
   /// `MSL_DISABLE_STRICT_MODE` at compile-time.
+  ///
+  /// All operations require non-null byte sequences to be valid to operate
+  /// within. Additionally, any pointer being re-aligned must be a byte pointer
+  /// and not a general-purpose `void*` pointer -- otherwise this may violate
+  /// strict-aliasing. Any query operations, on the other hand, are valid,
+  /// since the strict byte-representation is not exploited.
   //////////////////////////////////////////////////////////////////////////////
   class pointer_utilities final
   {
@@ -72,13 +79,13 @@ namespace msl {
     /// \param p the pointer to test
     /// \param align the alignment to query
     /// \return `true` if `p` is aligned to `align`
-    static auto is_aligned(const void* p, alignment align) noexcept -> bool;
+    static auto is_aligned(not_null<const void*> p, alignment align) noexcept -> bool;
 
     /// \brief Queries the current alignment of the specified pointer \p p
     ///
     /// \param p the pointer to query
     /// \return the alignment
-    static auto alignment_of(const void* p) noexcept -> alignment;
+    static auto alignment_of(not_null<const void*> p) noexcept -> alignment;
 
     //--------------------------------------------------------------------------
     // Alignment
@@ -91,7 +98,8 @@ namespace msl {
     /// \param p the pointer to align
     /// \param align the alignment
     /// \return the newly aligned pointer
-    static auto align_high(std::byte* p, alignment align) noexcept -> std::byte*;
+    static auto align_high(not_null<std::byte*> p, alignment align)
+      noexcept -> not_null<std::byte*>;
 
     /// \brief Aligns the pointer \p p to the next highest address that is a
     ///        \p offset bytes from a multiple of \p align
@@ -105,8 +113,8 @@ namespace msl {
     /// \param align the alignment
     /// \param offset the number of bytes to offset from the boundary
     /// \return the newly aligned pointer
-    static auto offset_align_high(std::byte* p, alignment align, std::size_t offset)
-      noexcept -> std::byte*;
+    static auto offset_align_high(not_null<std::byte*> p, alignment align, std::size_t offset)
+      noexcept -> not_null<std::byte*>;
 
     /// \brief Aligns the pointer \p p the previous lowest address that is a
     ///        a multiple of \p align
@@ -114,8 +122,8 @@ namespace msl {
     /// \param p the pointer to align
     /// \param align the alignment
     /// \return the newly aligned pointer
-    static auto align_low(std::byte* p, alignment align)
-      noexcept -> std::byte*;
+    static auto align_low(not_null<std::byte*> p, alignment align)
+      noexcept -> not_null<std::byte*>;
 
     /// \brief Aligns the pointer \p p to the previous lowest address that is a
     ///        \p offset bytes from a multiple of \p align
@@ -128,8 +136,8 @@ namespace msl {
     /// \param p the pointer to align
     /// \param align the alignment
     /// \return the newly aligned pointer
-    static auto offset_align_low(std::byte* p, alignment align, std::size_t offset)
-      noexcept -> std::byte*;
+    static auto offset_align_low(not_null<std::byte*> p, alignment align, std::size_t offset)
+      noexcept -> not_null<std::byte*>;
   };
 
 } // namespace msl
@@ -139,20 +147,20 @@ namespace msl {
 //-----------------------------------------------------------------------------
 
 inline
-auto msl::pointer_utilities::is_aligned(const void* p, alignment align)
+auto msl::pointer_utilities::is_aligned(not_null<const void*> p, alignment align)
   noexcept -> bool
 {
-  const auto address = reinterpret_cast<std::uintptr_t>(p);
+  const auto address = reinterpret_cast<std::uintptr_t>(p.get());
   const auto mask = (align.value().count() - 1u);
 
   return (address & mask) == 0u;
 }
 
 inline
-auto msl::pointer_utilities::alignment_of(const void* p)
+auto msl::pointer_utilities::alignment_of(not_null<const void*> p)
   noexcept -> alignment
 {
-  const auto address = reinterpret_cast<std::uintptr_t>(p);
+  const auto address = reinterpret_cast<std::uintptr_t>(p.get());
 
   return alignment::assume_at_boundary(std::countr_zero(address));
 }
@@ -162,10 +170,10 @@ auto msl::pointer_utilities::alignment_of(const void* p)
 //-----------------------------------------------------------------------------
 
 inline
-auto msl::pointer_utilities::align_high(std::byte* p, alignment align)
-  noexcept -> std::byte*
+auto msl::pointer_utilities::align_high(not_null<std::byte*> p, alignment align)
+  noexcept -> not_null<std::byte*>
 {
-  const auto address = reinterpret_cast<std::uintptr_t>(p);
+  const auto address = reinterpret_cast<std::uintptr_t>(p.get());
   const auto mask    = static_cast<std::uintptr_t>(~(align.value().count() - 1u));
   const auto padding = static_cast<std::uintptr_t>(align.value().count() - 1u);
 
@@ -174,19 +182,19 @@ auto msl::pointer_utilities::align_high(std::byte* p, alignment align)
   MSL_ASSERT(address <= new_address);
 
 #if MSL_DISABLE_STRICT_MODE
-  return reinterpret_cast<std::byte*>(new_address);
+  return assume_not_null(reinterpret_cast<std::byte*>(new_address));
 #else
   return p + (new_address - address);
 #endif
 }
 
 inline
-auto msl::pointer_utilities::offset_align_high(std::byte* p,
+auto msl::pointer_utilities::offset_align_high(not_null<std::byte*> p,
                                                alignment align,
                                                std::size_t offset)
-  noexcept -> std::byte*
+  noexcept -> not_null<std::byte*>
 {
-  const auto address = reinterpret_cast<std::uintptr_t>(p);
+  const auto address = reinterpret_cast<std::uintptr_t>(p.get());
   const auto mask    = static_cast<std::uintptr_t>(~(align.value().count() - 1u));
   const auto padding = static_cast<std::uintptr_t>(align.value().count() - 1u + offset);
 
@@ -195,17 +203,17 @@ auto msl::pointer_utilities::offset_align_high(std::byte* p,
   MSL_ASSERT(address <= new_address);
 
 #if MSL_DISABLE_STRICT_MODE
-  return reinterpret_cast<std::byte*>(new_address);
+  return assume_not_null(reinterpret_cast<std::byte*>(new_address));
 #else
   return p + (new_address - address);
 #endif
 }
 
 inline
-auto msl::pointer_utilities::align_low(std::byte* p, alignment align)
-  noexcept -> std::byte*
+auto msl::pointer_utilities::align_low(not_null<std::byte*> p, alignment align)
+  noexcept -> not_null<std::byte*>
 {
-  const auto address = reinterpret_cast<std::uintptr_t>(p);
+  const auto address = reinterpret_cast<std::uintptr_t>(p.get());
   const auto mask    = static_cast<std::uintptr_t>(~(align.value().count() - 1u));
 
   const auto new_address = (address & mask);
@@ -213,19 +221,19 @@ auto msl::pointer_utilities::align_low(std::byte* p, alignment align)
   MSL_ASSERT(address >= new_address);
 
 #if MSL_DISABLE_STRICT_MODE
-  return reinterpret_cast<std::byte*>(new_address);
+  return assume_not_null(reinterpret_cast<std::byte*>(new_address));
 #else
   return p - (address - new_address);
 #endif
 }
 
 inline
-auto msl::pointer_utilities::offset_align_low(std::byte* p,
+auto msl::pointer_utilities::offset_align_low(not_null<std::byte*> p,
                                               alignment align,
                                               std::size_t offset)
-  noexcept -> std::byte*
+  noexcept -> not_null<std::byte*>
 {
-  const auto address = reinterpret_cast<std::uintptr_t>(p);
+  const auto address = reinterpret_cast<std::uintptr_t>(p.get());
   const auto mask    = static_cast<std::uintptr_t>(~(align.value().count() - 1u));
 
   const auto new_address = (address & mask) - offset;
@@ -233,7 +241,7 @@ auto msl::pointer_utilities::offset_align_low(std::byte* p,
   MSL_ASSERT(address >= new_address);
 
 #if MSL_DISABLE_STRICT_MODE
-  return reinterpret_cast<std::byte*>(new_address);
+  return assume_not_null(reinterpret_cast<std::byte*>(new_address));
 #else
   return p - (address - new_address);
 #endif
