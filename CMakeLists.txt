@@ -49,6 +49,7 @@ set(header_files
   include/msl/utilities/assert.hpp
   include/msl/utilities/intrinsics.hpp
   include/msl/utilities/source_location.hpp
+  include/msl/utilities/dynamic_storage.hpp
 
   # Quantities
   include/msl/quantities/address.hpp
