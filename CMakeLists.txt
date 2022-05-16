@@ -66,6 +66,7 @@ set(header_files
   include/msl/pointers/raw_pointer.hpp
   include/msl/pointers/tagged_ptr.hpp
   include/msl/pointers/traversable_pointer.hpp
+  include/msl/pointers/traversal_utilities.hpp
   include/msl/pointers/intrusive_pointer_stack.hpp
 
   # Memory
