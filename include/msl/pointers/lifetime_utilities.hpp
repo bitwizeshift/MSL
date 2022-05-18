@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-/// \file uninitialized_storage.hpp
+/// \file lifetime_utilities.hpp
 ///
 /// \todo(Bitwize): Document this
 ///////////////////////////////////////////////////////////////////////////////
@@ -27,11 +27,17 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
 */
-#ifndef MSL_MEMORY_UNINITIALIZED_STORAGE_HPP
-#define MSL_MEMORY_UNINITIALIZED_STORAGE_HPP
+#ifndef MSL_POINTERS_LIFETIME_UTILITIES_HPP
+#define MSL_POINTERS_LIFETIME_UTILITIES_HPP
 
-#include "msl/utilities/intrinsics.hpp" // MSL_LIKELY
+#include "msl/pointers/not_null.hpp"
+#include "msl/pointers/pointer_utilities.hpp"   // pointer_utilities::is_aligned
+#include "msl/pointers/traversal_utilities.hpp" // traversal_utilities::advance
+#include "msl/quantities/alignment.hpp"         // alignment::of
+#include "msl/utilities/intrinsics.hpp"         // MSL_LIKELY
+#include "msl/utilities/assert.hpp"             // MSL_ASSERT
 
+#include <memory>      // std::construct_at
 #include <new>         // placement new
 #include <cstddef>     // std::size_t
 #include <iterator>    // std::iterator_traits, std::reverse_iterator
@@ -43,20 +49,20 @@
 namespace msl {
 
   //============================================================================
-  // static class : uninitialized_storage
+  // static class : lifetime_utilities
   //============================================================================
 
   //////////////////////////////////////////////////////////////////////////////
-  /// \brief Static class containing utilities for dealing with uninitialized
-  ///        storage.
+  /// \brief Static class containing utilities for dealing with lifetimes of
+  ///        objects.
   ///
   /// This class offers a variety of utilities for constructng objects at a
   /// given memory location, with proper exception handling safety
   //////////////////////////////////////////////////////////////////////////////
-  class uninitialized_storage
+  class lifetime_utilities
   {
-    uninitialized_storage() = delete;
-    ~uninitialized_storage() = delete;
+    lifetime_utilities() = delete;
+    ~lifetime_utilities() = delete;
 
     //--------------------------------------------------------------------------
     // Construction
@@ -64,16 +70,16 @@ namespace msl {
   public:
 
     /// \brief Constructs an instance of type \p T with the given \p args
-    ///        at the memory location specified in \p ptr
+    ///        at the memory location specified in \p p
     ///
     /// \tparam T the type to construct
     /// \param p The memory location to construct into
     /// \param args... The arguments to supply to T's constructor
-    /// \return Pointer to the initialized memory (cast of \p ptr)
+    /// \return Pointer to the initialized memory
     template <typename T, typename...Args>
     [[nodiscard]]
-    static auto construct_at(void* p, Args&&...args)
-      noexcept(std::is_nothrow_constructible_v<T, Args...>) -> T*;
+    static constexpr auto construct_at(not_null<void*> p, Args&&...args)
+      noexcept(std::is_nothrow_constructible_v<T, Args...>) -> not_null<T*>;
 
     /// \brief Constructs an array of the specified size at pointer \p p
     ///
@@ -83,8 +89,8 @@ namespace msl {
     /// \return the pointer to the constructed array
     template <typename T>
     [[nodiscard]]
-    static auto construct_array_at(void* p, std::size_t n)
-      noexcept(std::is_nothrow_constructible_v<T>) -> T*;
+    static constexpr auto construct_array_at(not_null<void*> p, uquantity<T> n)
+      noexcept(std::is_nothrow_constructible_v<T>) -> not_null<T*>;
 
     /// \brief Constructs an array of the specified size at pointer \p p by
     ///        copying \p copy to each array member
@@ -96,8 +102,8 @@ namespace msl {
     /// \return the pointer to the constructed array
     template <typename T, typename U>
     [[nodiscard]]
-    static auto construct_array_at(void* p, std::size_t n, const U& copy)
-      noexcept(std::is_nothrow_constructible_v<T, const U&>) -> T*;
+    static constexpr auto construct_array_at(not_null<void*> p, uquantity<T> n, const U& copy)
+      noexcept(std::is_nothrow_constructible_v<T, const U&>) -> not_null<T*>;
 
     /// \brief Constructs an instance of type \p T from a given \p tuple
     ///
@@ -107,7 +113,8 @@ namespace msl {
     /// \return pointer to the constructed element
     template <typename T, typename Tuple>
     [[nodiscard]]
-    static auto construct_from_tuple_at(void* p, Tuple&& tuple) -> T*;
+    static constexpr auto construct_from_tuple_at(not_null<void*> p, Tuple&& tuple)
+      -> not_null<T*>;
 
     //--------------------------------------------------------------------------
     // Destruction
@@ -118,7 +125,7 @@ namespace msl {
     /// \tparam T the type to destroy
     /// \param p the pointer to the instance to destroy
     template <typename T>
-    static auto destroy_at(T* p)
+    static constexpr auto destroy_at(not_null<T*> p)
       noexcept(std::is_nothrow_destructible_v<T>) -> void;
 
     /// \brief Destroys the array of instances at the specified pointer \p p
@@ -127,7 +134,7 @@ namespace msl {
     /// \param p the pointer to the array to destroy
     /// \param n the size of the array
     template <typename T>
-    static auto destroy_array_at(T* p, std::size_t n)
+    static constexpr auto destroy_array_at(not_null<T*> p, uquantity<T> n)
       noexcept(std::is_nothrow_destructible_v<T>) -> void;
 
     /// \brief Destroys all objects denoted by the range of iterators
@@ -137,9 +144,11 @@ namespace msl {
     /// \param first iterator to the start of the range
     /// \param last iterator to the end of the range
     template <typename InputIt, typename Sentinel>
-    static auto destroy_range(InputIt first, Sentinel last)
+    static constexpr auto destroy_range(InputIt first, Sentinel last)
       noexcept(std::is_nothrow_destructible_v<std::iter_value_t<InputIt>>) -> void
       requires(std::input_iterator<InputIt> && std::sentinel_for<Sentinel,InputIt>);
+
+#if __cpp_lib_ranges >= 202110
 
     /// \brief Destroys all objects denoted by a given range
     ///
@@ -147,9 +156,11 @@ namespace msl {
     ///
     /// \param range the range
     template <typename Range>
-    static auto destroy_range(Range&& range)
+    static constexpr auto destroy_range(Range&& range)
       noexcept(std::is_nothrow_destructible_v<std::ranges::range_value_t<std::decay_t<Range>>>) -> void
       requires(std::ranges::range<Range>);
+
+#endif // __cpp_lib_ranges >= 202110
 
     //--------------------------------------------------------------------------
     // Private Construction
@@ -157,23 +168,23 @@ namespace msl {
   private:
 
     template <typename T, typename Tuple, std::size_t...Idx>
-    static auto construct_from_tuple_at_impl(
-      void* p,
+    static constexpr auto construct_from_tuple_at_impl(
+      not_null<void*> p,
       Tuple&& tuple, std::index_sequence<Idx...>
-    ) -> T*;
+    ) -> not_null<T*>;
 
     template <typename T, typename...Args>
-    static auto construct_array_at_impl(
-      void* p,
-      std::size_t n,
+    static constexpr auto construct_array_at_impl(
+      not_null<void*> p,
+      uquantity<T> n,
       Args&&...args
-    ) noexcept(std::is_nothrow_constructible_v<T,Args...>) -> T*;
+    ) noexcept(std::is_nothrow_constructible_v<T,Args...>) -> not_null<T*>;
   };
 
 } // namespace msl
 
 //==============================================================================
-// definitions : static class : uninitialized_storage
+// definitions : static class : lifetime_utilities
 //==============================================================================
 
 //------------------------------------------------------------------------------
@@ -181,37 +192,46 @@ namespace msl {
 //------------------------------------------------------------------------------
 
 template <typename T, typename... Args>
-inline
-auto msl::uninitialized_storage::construct_at(void* p, Args&&...args)
-  noexcept(std::is_nothrow_constructible_v<T, Args...>) -> T*
+inline constexpr
+auto msl::lifetime_utilities::construct_at(not_null<void*> p, Args&&...args)
+  noexcept(std::is_nothrow_constructible_v<T, Args...>) -> not_null<T*>
 {
-  return new (p) T(std::forward<Args>(args)...);
+  MSL_ASSERT(pointer_utilities::is_aligned(p, alignment::of<T>()));
+
+  return assume_not_null(
+    std::construct_at<T>(static_cast<T*>(p.get()), std::forward<Args>(args)...)
+  );
 }
 
 template <typename T>
-inline
-auto msl::uninitialized_storage::construct_array_at(void* p, std::size_t n)
-  noexcept(std::is_nothrow_constructible_v<T>) -> T*
+inline constexpr
+auto msl::lifetime_utilities::construct_array_at(not_null<void*> p, uquantity<T> n)
+  noexcept(std::is_nothrow_constructible_v<T>) -> not_null<T*>
 {
   return construct_array_at_impl<T>(p, n);
 }
 
 template <typename T, typename U>
-inline
-auto msl::uninitialized_storage::construct_array_at(void* p,
-                                                    std::size_t n,
-                                                    const U& copy)
-  noexcept(std::is_nothrow_constructible_v<T, const U&>) -> T*
+inline constexpr
+auto msl::lifetime_utilities::construct_array_at(not_null<void*> p,
+                                                 uquantity<T> n,
+                                                 const U& copy)
+  noexcept(std::is_nothrow_constructible_v<T, const U&>) -> not_null<T*>
 {
+  // This should ideally be extremely rare. The pointer is still non-null, but
+  // invalid since no object can exist in a 0-element array.
+  if (n == uquantity<T>::zero()) MSL_UNLIKELY {
+    return static_pointer_cast<T>(p);
+  }
   return construct_array_at_impl<T>(p, n, copy);
 }
 
 
 template <typename T, typename Tuple>
-inline
-auto msl::uninitialized_storage::construct_from_tuple_at(void* p,
-                                                         Tuple&& tuple)
-  -> T*
+inline constexpr
+auto msl::lifetime_utilities::construct_from_tuple_at(not_null<void*> p,
+                                                      Tuple&& tuple)
+  -> not_null<T*>
 {
   return construct_from_tuple_at_impl<T>(
     p,
@@ -225,8 +245,8 @@ auto msl::uninitialized_storage::construct_from_tuple_at(void* p,
 //------------------------------------------------------------------------------
 
 template <typename T>
-inline
-auto msl::uninitialized_storage::destroy_at(T* p)
+inline constexpr
+auto msl::lifetime_utilities::destroy_at(not_null<T*> p)
   noexcept(std::is_nothrow_destructible_v<T>) -> void
 {
   // The 'is_trivially_destructible' check here is probably unnecessary, since
@@ -237,21 +257,23 @@ auto msl::uninitialized_storage::destroy_at(T* p)
 }
 
 template <typename T>
-inline
-auto msl::uninitialized_storage::destroy_array_at(T* p, std::size_t n)
+inline constexpr
+auto msl::lifetime_utilities::destroy_array_at(not_null<T*> p, uquantity<T> n)
   noexcept(std::is_nothrow_destructible_v<T>) -> void
 {
-  auto const first = p;
-  auto const last  = first + n;
+  if constexpr (!std::is_trivially_destructible_v<T>) {
+    auto const first = p;
+    auto const last  = first + n.count();
 
-  destroy_range(first, last);
+    destroy_range(first, last);
+  }
 }
 
 //------------------------------------------------------------------------------
 
 template <typename InputIt, typename Sentinel>
-inline
-auto msl::uninitialized_storage::destroy_range(InputIt first, Sentinel last)
+inline constexpr
+auto msl::lifetime_utilities::destroy_range(InputIt first, Sentinel last)
   noexcept(std::is_nothrow_destructible_v<std::iter_value_t<InputIt>>) -> void
   requires(std::input_iterator<InputIt> && std::sentinel_for<Sentinel,InputIt>)
 {
@@ -264,51 +286,68 @@ auto msl::uninitialized_storage::destroy_range(InputIt first, Sentinel last)
   }
 }
 
+#if __cpp_lib_ranges >= 202110
+
 template <typename Range>
-auto msl::uninitialized_storage::destroy_range(Range&& range)
+inline constexpr
+auto msl::lifetime_utilities::destroy_range(Range&& range)
   noexcept(std::is_nothrow_destructible_v<std::ranges::range_value_t<std::decay_t<Range>>>) -> void
   requires(std::ranges::range<Range>)
 {
-  destroy_range(
-    std::ranges::begin(std::forward<Range>(range)),
-    std::ranges::end(std::forward<Range>(range))
-  );
+  using value_type = std::ranges::range_value_t<std::decay_t<Range>>>;
+
+  if constexpr (!std::is_trivially_destructible_v<value_type>) {
+    destroy_range(
+      std::ranges::begin(std::forward<Range>(range)),
+      std::ranges::end(std::forward<Range>(range))
+    );
+  }
 }
+
+#endif // __cpp_lib_ranges >= 202110
 
 //------------------------------------------------------------------------------
 // Private Construction
 //------------------------------------------------------------------------------
 
 template <typename T, typename Tuple, size_t... Idx>
-inline
-auto msl::uninitialized_storage::construct_from_tuple_at_impl(
-  void* p,
+inline constexpr
+auto msl::lifetime_utilities::construct_from_tuple_at_impl(
+  not_null<void*> p,
   Tuple&& tuple,
   std::index_sequence<Idx...>
-) -> T*
+) -> not_null<T*>
 {
   return construct_at<T>(p, std::get<Idx>(std::forward<Tuple>(tuple))...);
 }
 
 
 template <typename T, typename... Args>
-inline
-auto msl::uninitialized_storage::construct_array_at_impl(
-  void* p,
-  std::size_t n,
+inline constexpr
+auto msl::lifetime_utilities::construct_array_at_impl(
+  not_null<void*> p,
+  uquantity<T> n,
   Args&&...args
-) noexcept(std::is_nothrow_constructible_v<T,Args...>) -> T*
+) noexcept(std::is_nothrow_constructible_v<T,Args...>) -> not_null<T*>
 {
-  auto const first = static_cast<T*>(p);
-  auto const last  = first + n;
+  MSL_ASSERT(n != 0u);
+
+  // 'p' interpreted as a 'T*' cannot legally be incremented with 'it++', so
+  // use the 'advance' utility instead.
+  constexpr auto increment = [](auto it){
+    return traversal_utilities::next(it);
+  };
+
+  auto const first = static_pointer_cast<T>(p);
+  auto const last  = traversal_utilities::advance(first, n);
 
   // capture 'result' so we can return a valid constructed object without
   // requiring std::launder
   auto const result = construct_at<T>(first, std::forward<Args>(args)...);
 
-  auto current = result + 1;
+  auto current = increment(result);
   if constexpr (std::is_nothrow_constructible_v<T, Args...>) {
-    for (; current != last; ++current) MSL_LIKELY {
+    for (; current != last; current = increment(current)) MSL_LIKELY {
       [[maybe_unused]]
       const auto r = construct_at<T>(
         current,
@@ -318,7 +357,7 @@ auto msl::uninitialized_storage::construct_array_at_impl(
   } else {
     // Attempt to construct n elements
     try {
-      for (; current != last; ++current) MSL_LIKELY {
+      for (; current != last; current = increment(current)) MSL_LIKELY {
         [[maybe_unused]]
         const auto r = construct_at<T>(
           current,
@@ -340,4 +379,4 @@ auto msl::uninitialized_storage::construct_array_at_impl(
   return result;
 }
 
-#endif /* MSL_MEMORY_UNINITIALIZED_STORAGE_HPP */
+#endif /* MSL_POINTERS_LIFETIME_UTILITIES_HPP */

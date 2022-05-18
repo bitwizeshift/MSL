@@ -22,7 +22,8 @@
   SOFTWARE.
 */
 
-#include <msl/memory/uninitialized_storage.hpp>
+#include "msl/pointers/not_null.hpp"
+#include <msl/pointers/lifetime_utilities.hpp>
 
 #include <catch2/catch.hpp>
 
@@ -54,7 +55,7 @@ struct test_type {
 
 } // namespace
 
-TEST_CASE("uninitialized_storage::construct_at<T>()", "[construction]") {
+TEST_CASE("lifetime_utilities::construct_at<T>()", "[construction]") {
   // Arrange
   using sut_type = test_type<>;
   auto context = test_context{};
@@ -62,14 +63,18 @@ TEST_CASE("uninitialized_storage::construct_at<T>()", "[construction]") {
 
   // Act
   [[maybe_unused]]
-  auto* sut = uninitialized_storage::construct_at<sut_type>(&sut_storage, &context);
+  auto sut = lifetime_utilities::construct_at<sut_type>(
+    assume_not_null(&sut_storage),
+    &context
+  );
 
+  // Assert
   SECTION("Calls underlying constructor") {
     REQUIRE(context.constructed);
   }
 }
 
-TEST_CASE("uninitialized_storage::construct_array_at(void*, std::size_t)", "[construction]") {
+TEST_CASE("lifetime_utilities::construct_array_at(void*, std::size_t)", "[construction]") {
   SECTION("T's constructor is non-throwing") {
 
   }
@@ -78,7 +83,7 @@ TEST_CASE("uninitialized_storage::construct_array_at(void*, std::size_t)", "[con
   }
 }
 
-TEST_CASE("uninitialized_storage::construct_array_at(void*, std::size_t, const U&)", "[construction]") {
+TEST_CASE("lifetime_utilities::construct_array_at(void*, std::size_t, const U&)", "[construction]") {
   SECTION("T's constructor is non-throwing") {
 
   }
@@ -87,7 +92,7 @@ TEST_CASE("uninitialized_storage::construct_array_at(void*, std::size_t, const U
   }
 }
 
-TEST_CASE("uninitialized_storage::construct_from_tuple_at(void*,Tuple&&)", "[construction]") {
+TEST_CASE("lifetime_utilities::construct_from_tuple_at(void*,Tuple&&)", "[construction]") {
   SECTION("Constructs array") {
 
   }
@@ -95,19 +100,19 @@ TEST_CASE("uninitialized_storage::construct_from_tuple_at(void*,Tuple&&)", "[con
 
 //------------------------------------------------------------------------------
 
-TEST_CASE("uninitialized_storage::destroy_at(T*)", "[destroy]") {
+TEST_CASE("lifetime_utilities::destroy_at(T*)", "[destroy]") {
 
 }
 
-TEST_CASE("uninitialized_storage::destroy_array_at(T*, std::size_t)", "[destroy]") {
+TEST_CASE("lifetime_utilities::destroy_array_at(T*, std::size_t)", "[destroy]") {
 
 }
 
-TEST_CASE("uninitialized_storage::destroy_range(InputIt, Sentinel)", "[destroy]") {
+TEST_CASE("lifetime_utilities::destroy_range(InputIt, Sentinel)", "[destroy]") {
 
 }
 
-TEST_CASE("uninitialized_storage::destroy_range(Range&&)", "[destroy]") {
+TEST_CASE("lifetime_utilities::destroy_range(Range&&)", "[destroy]") {
 
 }
 

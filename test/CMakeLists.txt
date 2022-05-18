@@ -12,12 +12,12 @@ set(source_files
   src/pointers/nullable_pointer.test.cpp
   src/pointers/not_null.test.cpp
   src/pointers/tagged_ptr.test.cpp
+  src/pointers/lifetime_utilities.test.cpp
 
   # Quantities
   src/quantities/quantity.test.cpp
 
   # Memory
-  src/memory/uninitialized_storage.test.cpp
 )
 
 add_executable(${PROJECT_NAME}.test
