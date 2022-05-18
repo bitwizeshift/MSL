@@ -69,6 +69,7 @@ set(header_files
   include/msl/pointers/traversal_utilities.hpp
   include/msl/pointers/intrusive_pointer_stack.hpp
   include/msl/pointers/lifetime_utilities.hpp
+  include/msl/pointers/unaligned_utilities.hpp
 
   # Memory
   include/msl/memory/virtual_memory.hpp
