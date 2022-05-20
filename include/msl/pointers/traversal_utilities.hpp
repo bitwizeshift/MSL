@@ -94,9 +94,23 @@ namespace msl {
     /// \param p the pointer to the start of a T object
     template <typename T>
     [[nodiscard]]
-    static auto advance(not_null<T*> p, quantity<T> n) noexcept -> not_null<T*>;
-    static constexpr auto advance(not_null<std::byte*> p, bytes n)
-      noexcept -> not_null<std::byte*>;
+    static auto advance(not_null<T*> p, quantity<std::remove_cv_t<T>> n) noexcept -> not_null<T*>;
+
+    /// \brief Proceed to the next \p p entry by advancing once
+    ///
+    /// \param p the pointer to advance
+    /// \return the advanced pointer
+    template <typename T>
+    [[nodiscard]]
+    static constexpr auto next(not_null<T*> p) noexcept -> not_null<T*>;
+
+    /// \brief Proceed to the previous \p p entry by decrementing once
+    ///
+    /// \param p the pointer to decrement
+    /// \return the decremented pointer
+    template <typename T>
+    [[nodiscard]]
+    static constexpr auto previous(not_null<T*> p) noexcept -> not_null<T*>;
 
     /// \brief Accesses the element at the specified \p offset from the pointer
     ///        \p p
@@ -105,14 +119,14 @@ namespace msl {
     /// \param offset the offset
     template <typename T>
     [[nodiscard]]
-    static auto access_at_offset(not_null<T*> p, quantity<T> offset) noexcept -> T&;
+    static auto access_at_offset(not_null<T*> p, quantity<std::remove_cv_t<T>> offset) noexcept -> T&;
   };
 
 } // namespace msl
 
 template <typename T>
 inline
-auto msl::traversal_utilities::advance(not_null<T*> p, quantity<T> n)
+auto msl::traversal_utilities::advance(not_null<T*> p, quantity<std::remove_cv_t<T>> n)
   noexcept -> not_null<T*>
 {
 #if MSL_DISABLE_STRICT_MODE
@@ -132,16 +146,25 @@ auto msl::traversal_utilities::advance(not_null<T*> p, quantity<T> n)
 #endif
 }
 
+template <typename T>
 inline constexpr
-auto msl::traversal_utilities::advance(not_null<std::byte*> p, bytes n)
-  noexcept -> not_null<std::byte*>
+auto msl::traversal_utilities::next(not_null<T*> p)
+  noexcept -> not_null<T*>
 {
-  return p + n.count();
+  return advance(p, 1);
+}
+
+template <typename T>
+inline constexpr
+auto msl::traversal_utilities::previous(not_null<T*> p)
+  noexcept -> not_null<T*>
+{
+  return advance(p, -1);
 }
 
 template <typename T>
 inline
-auto msl::traversal_utilities::access_at_offset(not_null<T*> p, quantity<T> offset)
+auto msl::traversal_utilities::access_at_offset(not_null<T*> p, quantity<std::remove_cv_t<T>> offset)
   noexcept -> T&
 {
   return *advance(p, offset);
