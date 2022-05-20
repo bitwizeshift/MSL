@@ -402,7 +402,7 @@ inline constexpr
 auto msl::alignment::at_boundary(element_type::rep n, source_location where)
   -> alignment
 {
-  return at_boundary(element_type{n});
+  return at_boundary(element_type{n}, where);
 }
 
 template <std::size_t N>
