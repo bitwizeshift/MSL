@@ -162,7 +162,7 @@ auto msl::pointer_utilities::alignment_of(not_null<const void*> p)
 {
   const auto address = reinterpret_cast<std::uintptr_t>(p.get());
 
-  return alignment::assume_at_boundary(std::countr_zero(address));
+  return alignment::assume_at_boundary(1u << std::countr_zero(address));
 }
 
 //-----------------------------------------------------------------------------
