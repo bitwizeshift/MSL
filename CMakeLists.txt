@@ -76,6 +76,9 @@ set(header_files
 
   # Blocks
   include/msl/blocks/memory_block.hpp
+
+  # Cells
+  include/msl/cells/cell.hpp
 )
 
 set(source_files
@@ -88,6 +91,9 @@ set(source_files
 
   # Memory
   src/msl/memory/virtual_memory.cpp
+
+  # Cells
+  src/msl/cells/cell.cpp
 )
 
 if (WIN32)

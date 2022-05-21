@@ -17,6 +17,9 @@ set(source_files
   # Quantities
   src/quantities/quantity.test.cpp
 
+  # Cells
+  src/cells/cell.test.cpp
+
   # Memory
 )
 
