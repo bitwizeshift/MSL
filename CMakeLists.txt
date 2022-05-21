@@ -4,13 +4,26 @@ if (DEFINED PROJECT_NAME)
   set(is_subproject TRUE)
 endif ()
 
+###############################################################################
+# Project Options
+###############################################################################
+
+option(MSL_ENABLE_UNIT_TESTS "Compile and run the unit tests for this library" ON)
+option(MSL_DISABLE_STRICT_MODE "Disables strict/esoteric C++ requirements" OFF)
+option(MSL_PRESET_CONFIGURATION "Option set when using --preset argument" OFF)
+
+###############################################################################
+# Settings
+###############################################################################
+
 set(MSL_CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(MSL_CMAKE_TEMPLATE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/templates")
 
 set(CMAKE_MODULE_PATH "${MSL_CMAKE_MODULE_PATH}" "${CMAKE_MODULE_PATH}")
 
-option(MSL_ENABLE_UNIT_TESTS "Compile and run the unit tests for this library" ON)
-option(MSL_DISABLE_STRICT_MODE "Disables strict/esoteric C++ requirements" OFF)
+###############################################################################
+# Project Definition
+###############################################################################
 
 if (NOT CMAKE_TESTING_ENABLED AND MSL_ENABLE_UNIT_TESTS)
   enable_testing()
@@ -33,7 +46,6 @@ set(MSL_VERSION ${PROJECT_VERSION} CACHE INTERNAL "Version of MSL")
 ##############################################################################
 
 include(BuildConfigurations)
-
 include(AddSelfContainmentTest)
 
 configure_file(
@@ -177,5 +189,7 @@ endif ()
 if (is_subproject)
   return()
 endif ()
+
+include(PatchCompileCommands)
 
 # TODO(bitwize): Add install logic
