@@ -32,6 +32,8 @@ set(MSL_VERSION ${PROJECT_VERSION} CACHE INTERNAL "Version of MSL")
 # Targets
 ##############################################################################
 
+include(BuildConfigurations)
+
 include(AddSelfContainmentTest)
 
 configure_file(
