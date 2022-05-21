@@ -1,0 +1,101 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "displayName": "Base configuration",
+      "description": "The base configuration",
+      "binaryDir": "${sourceDir}/build/cmake-${presetName}",
+      "installDir": "${sourceDir}/install/${presetName}",
+      "generator": "Ninja Multi-Config",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "MSL_ENABLE_UNIT_TESTS": "ON",
+        "MSL_PRESET_CONFIGURATION": "ON"
+      }
+    }, {
+      "name": "clang",
+      "inherits": "base",
+      "displayName": "Clang build",
+      "description": "Builds with clang from PATH",
+      "environment": {
+        "CXX": "clang++"
+      }
+    }, {
+      "name": "clang-13",
+      "inherits": "base",
+      "displayName": "Clang 13.0 Build",
+      "description": "Builds using clang-13",
+      "toolchainFile": "cmake/toolchains/clang-toolchain.cmake",
+      "environment": {
+        "CLANG_VERSION": "13"
+      }
+    }, {
+      "name": "clang-14",
+      "inherits": "base",
+      "displayName": "Clang 14.0 Build",
+      "description": "Builds using clang-14",
+      "toolchainFile": "cmake/toolchains/clang-toolchain.cmake",
+      "environment": {
+        "CLANG_VERSION": "14"
+      }
+    }, {
+      "name": "gcc",
+      "inherits": "base",
+      "displayName": "GCC build",
+      "description": "Builds with GCC from PATH",
+      "environment": {
+        "CXX": "g++"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "clang",
+      "configurePreset": "clang",
+      "configuration": "Debug"
+    }, {
+      "name": "clang-13",
+      "configurePreset": "clang-13",
+      "configuration": "Debug"
+    }, {
+      "name": "clang-14",
+      "configurePreset": "clang-14",
+      "configuration": "Debug"
+    }, {
+      "name": "gcc",
+      "configurePreset": "gcc",
+      "configuration": "Debug"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": {"outputOnFailure": true},
+      "execution": {"noTestsAction": "error", "stopOnFailure": false}
+    }, {
+      "name": "clang",
+      "configurePreset": "clang",
+      "inherits": "base"
+    }, {
+      "name": "clang-13",
+      "configurePreset": "clang-13",
+      "inherits": "base"
+    }, {
+      "name": "clang-14",
+      "configurePreset": "clang-14",
+      "inherits": "base"
+    }, {
+      "name": "gcc",
+      "configurePreset": "gcc",
+      "inherits": "base"
+    }
+  ]
+}

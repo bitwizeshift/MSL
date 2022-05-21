@@ -9,7 +9,7 @@ endif ()
 ###############################################################################
 
 option(BUILD_SHARED_LIBS "Build all libraries as a shared library" OFF)
-option(MSL_ENABLE_UNIT_TESTS "Compile and run the unit tests for this library" ON)
+option(MSL_ENABLE_UNIT_TESTS "Compile and run the unit tests for this library" OFF)
 option(MSL_DISABLE_STRICT_MODE "Disables strict/esoteric C++ requirements" OFF)
 option(MSL_PRESET_CONFIGURATION "Option set when using --preset argument" OFF)
 
