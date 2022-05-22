@@ -195,6 +195,37 @@ if (MSL_ENABLE_UNIT_TESTS)
 endif ()
 
 ##############################################################################
+# Coverage
+##############################################################################
+
+find_program(GCOVR_COMMAND NAMES "gcovr")
+
+if (NOT GCOVR_COMMAND)
+  message(WARNING "'gcovr' executable not found! Unable to add coverage target")
+endif ()
+
+set(coverage_dir "${CMAKE_BINARY_DIR}/coverage-report")
+
+add_custom_target(${PROJECT_NAME}.coverage
+  COMMENT "Generating code-coverage report"
+  WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+  COMMAND "${CMAKE_COMMAND}" "-E" "make_directory" "${coverage_dir}"
+  COMMAND "${GCOVR_COMMAND}" "${PROJECT_BINARY_DIR}"
+    "--coveralls" "${coverage_dir}/coveralls.json"
+    "--json" "${coverage_dir}/coverage.json"
+    "--html-details" "${coverage_dir}/index.html"
+    "--exclude" "test/.*"
+    "--exclude" "/usr/.*"
+    "--exclude" "${CMAKE_BINARY_DIR}/.*"
+    "--exclude-unreachable-branches"
+  BYPRODUCTS
+    "${coverage_dir}/coveralls.json"
+    "${coverage_dir}/coverage.json"
+    "${coverage_dir}/index.html"
+  VERBATIM
+)
+
+##############################################################################
 # Installation
 ##############################################################################
 
@@ -241,4 +272,9 @@ install(
   FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
         "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
   DESTINATION "${MSL_CMAKE_CONFIG_DESTINATION}"
+)
+
+install(
+  DIRECTORY "${coverage_dir}"
+  TYPE DOC
 )
